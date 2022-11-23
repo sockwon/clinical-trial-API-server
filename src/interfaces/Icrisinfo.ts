@@ -6,7 +6,7 @@ export default interface ICrisInputData {
   date_updated: Date;
   date_enrolment: Date;
   type_enrolment_kr: string;
-  results_date_completed: Date;
+  results_date_completed?: any;
   results_type_date_completed_kr: string;
   study_type_kr: string;
   i_freetext_kr: string;
