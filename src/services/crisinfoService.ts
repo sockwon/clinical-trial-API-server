@@ -6,6 +6,7 @@ import ICrisInputData from "../interfaces/Icrisinfo";
 import Joi from "joi";
 import axios from "axios";
 import { erorrGenerator } from "../middlewares/errorGenerator";
+import PQueue from "p-queue";
 
 const schemaCrisInfoInputData = Joi.object({
   trial_id: Joi.string()
@@ -36,10 +37,6 @@ const schemaServiceKey = Joi.object({
 });
 
 /**
- * 목적: batch-process 작성
- */
-
-/**
  * 목적: open api 에 값을 요청함
  * #########      TODO      ############
  * 1. 인증키 가져오기
@@ -68,6 +65,16 @@ const getCrisInfoFromOpenAPI = async (page: number, rows: number) => {
   }
 
   return rawData.data.items;
+};
+
+const checkTotalCountOfCris = async () => {
+  const serviceKey = process.env.SERVICE_KEY;
+  const rawData = await axios({
+    method: "get",
+    url: `http://apis.data.go.kr/1352159/crisinfodataview/list?serviceKey=${serviceKey}&resultType=JSON&pageNo=1&numOfRows=1`,
+  });
+
+  return rawData.data.totalCount;
 };
 
 /**
@@ -124,16 +131,28 @@ const getDataAndBulkInsert = async (page: number, rows: number) => {
   return await crisInfoInputService(getData);
 };
 
-const inputOperator = async () => {
-  const empty = await selectInputOrUpdate();
+/**
+ * 목적: batch-process 작성
+ * #########      TODO      ############
+ * 1. 스케쥴러가 batch 실행
+ * 2. 유휴시간대를 선택
+ * 3. batch 는 다수의 작업을 일정하게 나눠서 실행. 1000개의 이미지를 100개씩 업로드.
+ * 4. batch pqueue 외부 모듈 사용함
+ * 5. 동시에 promise 10 개 실행
+ */
+const batchForInput = async () => {
+  const total = await checkTotalCountOfCris();
+  const iteration = Math.floor(total / 50);
 
-  if (empty === 0) {
-    let page = 1;
-    const rows = 50;
-    while (true) {
-      await getDataAndBulkInsert(page, rows);
-      page++;
+  const queue = new PQueue({ concurrency: 10 });
+
+  const selection = await selectInputOrUpdate();
+
+  if (selection === 0) {
+    for (let i = 0; i <= iteration; i++) {
+      await queue.add(() => getDataAndBulkInsert(i + 1, 50));
     }
+  } else {
   }
 };
 
@@ -142,4 +161,5 @@ export default {
   getCrisInfoFromOpenAPI,
   selectInputOrUpdate,
   getDataAndBulkInsert,
+  batchForInput,
 };

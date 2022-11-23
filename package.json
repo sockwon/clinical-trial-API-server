@@ -29,7 +29,7 @@
     "morgan": "^1.10.0",
     "mysql": "^2.18.1",
     "node-cron": "^3.0.2",
-    "p-queue": "^7.3.0",
+    "p-queue": "^6.6.2",
     "typeorm": "^0.3.10"
   },
   "devDependencies": {
