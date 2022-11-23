@@ -1,26 +1,74 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import crisInfoDao from "../models/crisinfoDao";
 import ICrisInputData from "../interfaces/Icrisinfo";
 import Joi from "joi";
+import axios from "axios";
+import { erorrGenerator } from "../middlewares/errorGenerator";
 
 const schemaCrisInfoInputData = Joi.object({
-  trial_id: Joi.string().pattern(new RegExp("^[A-z]{3,3}d{7,7}$")).required(),
-  scientific_title_kr: Joi.string().required().max(400),
+  trial_id: Joi.string()
+    .pattern(/^[A-z]{3,3}\d{7,7}$/)
+    .required(),
+  scientific_title_kr: Joi.string().required().max(4000),
+  scientific_title_en: Joi.string().required().max(4000),
   study_type_kr: Joi.string().required().max(40),
   date_registration: Joi.date().required(),
   date_updated: Joi.date(),
   primary_sponsor_kr: Joi.string().max(200),
-  scientific_title_en: Joi.string().required().max(400),
   date_enrolment: Joi.date(),
   type_enrolment_kr: Joi.string().max(30),
-  results_date_completed: Joi.date(),
-  results_type_date_completed_kr: Joi.string().max(30),
+  results_date_completed: Joi.string().allow(null, ""),
+  results_type_date_completed_kr: Joi.string().max(30).allow(null, ""),
   i_freetext_kr: Joi.string().max(400),
-  phase_kr: Joi.string().max(100),
+  phase_kr: Joi.string().max(100).allow(null, ""),
   source_name_kr: Joi.string().max(200),
-  primary_outcome_1_kr: Joi.string().max(200),
+  primary_outcome_1_kr: Joi.string().max(4000),
 });
 
 const schemaInputArray = Joi.array().items(schemaCrisInfoInputData);
+
+const schemaServiceKey = Joi.object({
+  serviceKey: Joi.string().required(),
+  pageNum: Joi.number().required(),
+  numOfRows: Joi.number().required(),
+});
+
+/**
+ * 목적: batch-process 작성
+ */
+
+/**
+ * 목적: open api 에 값을 요청함
+ * #########      TODO      ############
+ * 1. 인증키 가져오기
+ * 2. axios 로 open api 요청하기
+ * 3. 값을 리턴하기
+ * #########    Exception   ############
+ * 1. 인증키가 없음
+ * 2. axios 요청에 따른 값이 없음
+ */
+
+const getCrisInfoFromOpenAPI = async (page: number, rows: number) => {
+  const serviceKey = process.env.SERVICE_KEY;
+
+  const pageNum = page;
+  const numOfRows = rows;
+
+  await schemaServiceKey.validateAsync({ serviceKey, pageNum, numOfRows });
+
+  const rawData = await axios({
+    method: "get",
+    url: `http://apis.data.go.kr/1352159/crisinfodataview/list?serviceKey=${serviceKey}&resultType=JSON&pageNo=${pageNum}&numOfRows=${numOfRows}`,
+  });
+
+  if (rawData.data.items.length === 0) {
+    erorrGenerator(204, "no contents");
+  }
+
+  return rawData.data.items;
+};
 
 /**
  *목적 : 임상 데이터를 입력
@@ -50,9 +98,48 @@ const crisInfoInputService = async (inputData: ICrisInputData[]) => {
   const result = await crisInfoDao.crisInfoInputDao(inputData);
   console.info(result);
   await crisInfoDao.isEndDao();
+
   return result;
+};
+
+const selectInputOrUpdate = async () => {
+  const rows = await crisInfoDao.isEmpty("cris_info");
+  const result = Number(rows[0]["COUNT(*)"]);
+
+  return result;
+};
+
+const processData = async (getData: ICrisInputData[]) => {
+  return getData.forEach((obj: ICrisInputData) => {
+    if (obj.results_date_completed === "") {
+      obj.results_date_completed = null;
+    }
+  });
+};
+
+const getDataAndBulkInsert = async (page: number, rows: number) => {
+  const getData = await getCrisInfoFromOpenAPI(page, rows);
+  await processData(getData);
+
+  return await crisInfoInputService(getData);
+};
+
+const inputOperator = async () => {
+  const empty = await selectInputOrUpdate();
+
+  if (empty === 0) {
+    let page = 1;
+    const rows = 50;
+    while (true) {
+      await getDataAndBulkInsert(page, rows);
+      page++;
+    }
+  }
 };
 
 export default {
   crisInfoInputService,
+  getCrisInfoFromOpenAPI,
+  selectInputOrUpdate,
+  getDataAndBulkInsert,
 };

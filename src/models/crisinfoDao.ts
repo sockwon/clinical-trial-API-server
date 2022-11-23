@@ -1,4 +1,4 @@
-import database from "../models/database";
+import database from "./database";
 import CrisInfo from "../entity/Crisinfo";
 import ICrisInputData from "../interfaces/Icrisinfo";
 
@@ -22,7 +22,16 @@ const isEndDao = async () => {
   );
 };
 
+const isEmpty = async (table: string) => {
+  return await database.query(
+    `
+    SELECT COUNT(*) FROM ${table}
+    `
+  );
+};
+
 export default {
   crisInfoInputDao,
   isEndDao,
+  isEmpty,
 };
