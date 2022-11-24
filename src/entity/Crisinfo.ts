@@ -61,7 +61,7 @@ export class CrisInfo {
   @Column({ type: "boolean", nullable: false, default: false })
   isUpdate!: boolean;
 
-  @Column({ type: "boolean", nullable: true })
+  @Column({ type: "boolean", nullable: true, default: false })
   isEnd!: boolean;
 
   @CreateDateColumn()

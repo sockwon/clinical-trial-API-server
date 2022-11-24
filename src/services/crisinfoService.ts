@@ -124,12 +124,32 @@ const processData = async (getData: ICrisInputData[]) => {
   });
 };
 
-const getDataAndBulkInsert = async (page: number, rows: number) => {
+const getData = async (page: number, rows: number) => {
   const getData = await getCrisInfoFromOpenAPI(page, rows);
   await processData(getData);
 
-  return await crisInfoInputService(getData);
+  return getData;
 };
+
+const bulkInsert = async (page: number, rows: number) => {
+  const data = await getData(page, rows);
+  return await crisInfoInputService(data);
+};
+
+/**
+ * 목적: update
+ * #########      TODO      ############
+ * 1. bulkinsert 처럼 open api 의 모든 임상 정보를 가져온다. 단 batch process 에 따라서 50개씩
+ * 2. 50개의 batch 를 on duplicate on 으로 insert 한다. update 라면 isUpdate 칼럼을 true 로 한다.
+ * 3. 잊지말고 isNew 를 false 로 해줘야 한다. 새벽에 한다. 일주일 단위로 업데이트 한다.
+ * 4. isEnd 업데이트도 같이 한다.
+ */
+
+const batchForUpdateNew = async () => {};
+
+const batchForUpdateEnd = async () => {};
+
+const batchForUpdate = async () => {};
 
 /**
  * 목적: batch-process 작성
@@ -142,15 +162,16 @@ const getDataAndBulkInsert = async (page: number, rows: number) => {
  */
 const batchForInput = async () => {
   const total = await checkTotalCountOfCris();
-  const iteration = Math.floor(total / 50);
+  const numsOfRows = 50;
+  const iteration = Math.floor(total / numsOfRows);
 
   const queue = new PQueue({ concurrency: 10 });
 
-  const selection = await selectInputOrUpdate();
+  const isUpdate = await selectInputOrUpdate();
 
-  if (selection === 0) {
+  if (isUpdate === 0) {
     for (let i = 0; i <= iteration; i++) {
-      await queue.add(() => getDataAndBulkInsert(i + 1, 50));
+      await queue.add(() => bulkInsert(i + 1, numsOfRows));
     }
   } else {
   }
@@ -160,6 +181,7 @@ export default {
   crisInfoInputService,
   getCrisInfoFromOpenAPI,
   selectInputOrUpdate,
-  getDataAndBulkInsert,
+  getData,
   batchForInput,
+  bulkInsert,
 };
