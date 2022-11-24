@@ -23,7 +23,7 @@ const isEndDao = async () => {
   );
 };
 
-const isEmpty = async (table: string) => {
+const isEmptyDao = async (table: string) => {
   return await database.query(
     `
     SELECT COUNT(*) FROM ${table}
@@ -64,7 +64,7 @@ const crisInfoUpdateDao = async (inputData: ICrisInputData) => {
   );
 };
 
-const isUpdated = async () => {
+const isUpdatedDao = async () => {
   return await database.query(
     `
     UPDATE cris_info 
@@ -78,8 +78,8 @@ const isUpdated = async () => {
 export default {
   crisInfoInputDao,
   isEndDao,
-  isEmpty,
+  isEmptyDao,
   crisInfoAddDao,
   crisInfoUpdateDao,
-  isUpdated,
+  isUpdatedDao,
 };

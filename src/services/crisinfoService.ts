@@ -110,7 +110,7 @@ const crisInfoInputService = async (inputData: ICrisInputData[]) => {
 };
 
 const selectInputOrUpdate = async () => {
-  const rows = await crisInfoDao.isEmpty("cris_info");
+  const rows = await crisInfoDao.isEmptyDao("cris_info");
   const result = Number(rows[0]["COUNT(*)"]);
 
   return result;
