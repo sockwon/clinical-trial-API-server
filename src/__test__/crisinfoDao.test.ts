@@ -4,6 +4,8 @@ import {
   expect,
   beforeAll,
   afterAll,
+  beforeEach,
+  afterEach,
   jest,
 } from "@jest/globals";
 
@@ -71,9 +73,10 @@ describe("crisinfoDao test suite: 읽기", () => {
     await database.destroy();
   });
 
-  test("isEmpty 현재 데이터가 테이블에 있으므로 반환값은 3이 나와야 한다.", async () => {
+  test("현재 3개의 데이터가 테이블에 있으므로 반환값은 3이 나와야 한다.", async () => {
     const value = await crisinfoDao.isEmptyDao("cris_info");
     const result = value[0]["COUNT(*)"];
+
     expect(result).toBe("2");
   });
 });
@@ -84,7 +87,7 @@ describe("crisinfoDao test suite: 쓰기", () => {
       primary_sponsor_kr: "전북대학교병원",
       source_name_kr: "헬릭스미스",
       phase_kr: "해당사항없음",
-      date_registration: "2015-11-24",
+      date_registration: new Date("2015-11-24"),
       study_type_kr: "중재연구",
       type_enrolment_kr: "실제등록",
       results_type_date_completed_kr: "예정",
@@ -94,8 +97,8 @@ describe("crisinfoDao test suite: 쓰기", () => {
       scientific_title_kr:
         "HX112의 여성 갱년기 증상 개선에 대한 유효성 및 안전성을 평가하기 위한 12주, 무작위배정, 이중눈가림, 위약 대조 인체적용시험",
       primary_outcome_1_kr: "쿠퍼만 갱년기 지수",
-      date_updated: "2022-11-09",
-      date_enrolment: "2022-04-27",
+      date_updated: new Date("2022-11-09"),
+      date_enrolment: new Date("2022-04-27"),
       scientific_title_en:
         "A 12-week randomized, double-blind, placebo-controlled clinical trial to evaluate the efficacy and safety of HX112 on menopausal symptoms.",
     },
@@ -104,7 +107,7 @@ describe("crisinfoDao test suite: 쓰기", () => {
       primary_sponsor_kr: "전북대학교병원",
       source_name_kr: "상지대학교",
       phase_kr: "해당사항없음",
-      date_registration: "2022-11-22",
+      date_registration: new Date("2022-11-22"),
       study_type_kr: "중재연구",
       type_enrolment_kr: "실제등록",
       results_type_date_completed_kr: "예정",
@@ -115,14 +118,14 @@ describe("crisinfoDao test suite: 쓰기", () => {
         "건강한 성인에서 경방소시호탕과 합성의약품 3 종 (Amoxicillin/Clavulanate, Clarithromycin, Loxoprofen)의 상호작용을 평가하기 위한 공개, 단회/반복투여, 단일 순서군, 3-치료군, 교차 임상시험 ",
       primary_outcome_1_kr:
         "Amoxicillin, clavulanic acid, clartithromycin 및 loxoprofen의 AUCt, Cmax",
-      date_updated: "2022-11-08",
-      date_enrolment: "2022-06-08",
+      date_updated: new Date("2022-11-08"),
+      date_enrolment: new Date("2022-06-08"),
       scientific_title_en:
         "An open, single／multiple dosing, one-sequence, three-treatment, crossover study to evaluate the drug-drug interaction between herbal medicine(Sosiho-tang) and three chemical drugs (amoxicillin／clavulanate, clarithromycin, loxoprofen) in healthy volunteers",
     },
   ];
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     await database.initialize();
     await database
       .createQueryBuilder()
@@ -132,22 +135,24 @@ describe("crisinfoDao test suite: 쓰기", () => {
       .execute();
   });
 
-  afterAll(async () => {
+  afterEach(async () => {
     await database.query(`TRUNCATE TABLE cris_info`);
     await database.destroy();
   });
 
-  test("isEndDao 오늘 날짜에 비추어 date_completed 가 과거일 때 isEnd 값을 true, isUpdate 값을 false 로 바꿔준다", async () => {
+  test("오늘 날짜에 비추어 date_completed 가 과거일 때 isEnd 값을 true, isUpdate 값을 false 로 바꿔준다", async () => {
     const value = await crisinfoDao.isEndDao();
+
     const result = await database
       .getRepository(CrisInfo)
       .createQueryBuilder("crisinfo")
       .where("crisinfo.trial_id=:trial_id", { trial_id: "KCT0007932" })
       .getOne();
+
     expect(result?.isEnd).toBe(true);
   });
 
-  test("crisInfoAddDao unique 키가 중복인 경우를 제외하고 row 추가", async () => {
+  test("unique 키가 중복인 경우를 제외하고 row 추가", async () => {
     const rows: ICrisInputData[] = [
       {
         primary_sponsor_kr: "전북대학교병원",
@@ -189,7 +194,68 @@ describe("crisinfoDao test suite: 쓰기", () => {
       },
     ];
     const result = await crisinfoDao.crisInfoAddDao(rows);
-    const value: any = await database.query(`SELECT COUNT(*) FROM cris_info`);
-    expect(value[0]["COUNT(*)"]).toBe("3");
+    expect(result.raw.affectedRows).toBe(1);
+  });
+
+  test("bulk insert 를 한다", async () => {
+    await database.query(`TRUNCATE cris_info`);
+    const result = await crisinfoDao.crisInfoInputDao(example);
+
+    expect(result.raw.affectedRows).toBe(2);
+  });
+
+  test("date_updated 가 업데이트 됐다면 자료를 업데이트 한다", async () => {
+    const example = {
+      primary_sponsor_kr: "전북대학교병원",
+      source_name_kr: "상지대학교",
+      phase_kr: "해당사항없음",
+      date_registration: new Date("2022-11-22"),
+      study_type_kr: "테스트대상1",
+      type_enrolment_kr: "테스트대상2",
+      results_type_date_completed_kr: "테스트대상3",
+      i_freetext_kr: "의약품",
+      results_date_completed: "2023-05-31",
+      trial_id: "KCT0007930",
+      scientific_title_kr:
+        "건강한 성인에서 경방소시호탕과 합성의약품 3 종 (Amoxicillin/Clavulanate, Clarithromycin, Loxoprofen)의 상호작용을 평가하기 위한 공개, 단회/반복투여, 단일 순서군, 3-치료군, 교차 임상시험 ",
+      primary_outcome_1_kr:
+        "Amoxicillin, clavulanic acid, clartithromycin 및 loxoprofen의 AUCt, Cmax",
+      date_updated: new Date("2022-11-10"),
+      date_enrolment: new Date("2022-06-08"),
+      scientific_title_en:
+        "An open, single／multiple dosing, one-sequence, three-treatment, crossover study to evaluate the drug-drug interaction between herbal medicine(Sosiho-tang) and three chemical drugs (amoxicillin／clavulanate, clarithromycin, loxoprofen) in healthy volunteers",
+    };
+
+    const result = await crisinfoDao.crisInfoUpdateDao(example);
+    const value = await database
+      .getRepository(CrisInfo)
+      .createQueryBuilder("crisInfo")
+      .where("crisInfo.trial_id =:trial_id", { trial_id: "KCT0007930" })
+      .execute();
+    expect(result.affected).toBe(1);
+    expect(value[0].crisInfo_study_type_kr).toBe("테스트대상1");
+    expect(value[0].crisInfo_type_enrolment_kr).toBe("테스트대상2");
+    expect(value[0].crisInfo_results_type_date_completed_kr).toBe(
+      "테스트대상3"
+    );
+  });
+
+  test("update 가 됐다면 isUpdate 를 true 로 바꾼다", async () => {
+    // await database
+    //   .createQueryBuilder()
+    //   .update(CrisInfo)
+    //   .set({ phase_kr: "테스트" })
+    //   .where("trial_id =:trial_id", { trial_id: "KCT0007932" })
+    //   .execute();
+
+    const value = await database
+      .getRepository(CrisInfo)
+      .createQueryBuilder("crisInfo")
+      .where("crisInfo.trial_id =:trial_id", { trial_id: "KCT0007932" })
+      .execute();
+
+    const result = await crisinfoDao.isUpdatedDao();
+    expect(result.changedRows).toBe(1);
+    expect(value).toBe("");
   });
 });
