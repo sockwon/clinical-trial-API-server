@@ -7,6 +7,12 @@ import Joi from "joi";
 import axios from "axios";
 import { erorrGenerator } from "../middlewares/errorGenerator";
 import PQueue from "p-queue";
+import { logger } from "../../config/winston";
+
+/**
+ * 목적: validation data
+ * 외부모듈인 Joi 사용
+ */
 
 const schemaCrisInfoInputData = Joi.object({
   trial_id: Joi.string()
@@ -16,16 +22,16 @@ const schemaCrisInfoInputData = Joi.object({
   scientific_title_en: Joi.string().required().max(4000),
   study_type_kr: Joi.string().required().max(40),
   date_registration: Joi.date().required(),
-  date_updated: Joi.date(),
-  primary_sponsor_kr: Joi.string().max(200),
-  date_enrolment: Joi.date(),
-  type_enrolment_kr: Joi.string().max(30),
+  date_updated: Joi.date().allow(null, ""),
+  primary_sponsor_kr: Joi.string().max(200).allow(null, ""),
+  date_enrolment: Joi.date().allow(null, ""),
+  type_enrolment_kr: Joi.string().max(30).allow(null, ""),
   results_date_completed: Joi.string().allow(null, ""),
   results_type_date_completed_kr: Joi.string().max(30).allow(null, ""),
-  i_freetext_kr: Joi.string().max(400),
+  i_freetext_kr: Joi.string().max(400).allow(null, ""),
   phase_kr: Joi.string().max(100).allow(null, ""),
-  source_name_kr: Joi.string().max(200),
-  primary_outcome_1_kr: Joi.string().max(4000),
+  source_name_kr: Joi.string().max(200).allow(null, ""),
+  primary_outcome_1_kr: Joi.string().max(4000).allow(null, ""),
 });
 
 const schemaInputArray = Joi.array().items(schemaCrisInfoInputData);
@@ -78,6 +84,12 @@ const checkTotalCountOfCris = async () => {
 };
 
 /**
+ * 실행이 완료되면 추가된 건 수, 업데이트 된 건 수를 출력하거나 따로 로깅해줘야함
+ * #########      TODO      ############
+ * 1.실행함수에서 값을 집계한다. 집계가 끝나면
+ */
+
+/**
  *목적 : 임상 데이터를 입력
  *#########      TODO      ############
  *1. req 페이지 당 출력개수 최대 50개. 모든 데이터를 입력받아야 한다.
@@ -103,17 +115,19 @@ const crisInfoInputService = async (inputData: ICrisInputData[]) => {
   await schemaInputArray.validateAsync(inputData);
 
   const result = await crisInfoDao.crisInfoInputDao(inputData);
-  console.info(result);
-  await crisInfoDao.isEndDao();
-
   return result;
 };
 
 const selectInputOrUpdate = async () => {
   const rows = await crisInfoDao.isEmptyDao("cris_info");
-  const result = Number(rows[0]["COUNT(*)"]);
+  const numsOfRows = Number(rows[0]["COUNT(*)"]);
+  const total = await checkTotalCountOfCris();
 
-  return result;
+  console.log("total - numsOfRows:", total - numsOfRows);
+  if (numsOfRows === 0) return 0;
+  if (total - numsOfRows > 50) return 0;
+
+  return true;
 };
 
 const processData = async (getData: ICrisInputData[]) => {
@@ -133,7 +147,9 @@ const getData = async (page: number, rows: number) => {
 
 const bulkInsert = async (page: number, rows: number) => {
   const data = await getData(page, rows);
-  return await crisInfoInputService(data);
+  const result = await crisInfoInputService(data);
+  // logger.info(result.raw.affectedRows);
+  // return result.raw.affectedRows;
 };
 
 /**
@@ -145,37 +161,79 @@ const bulkInsert = async (page: number, rows: number) => {
  * 4. isEnd 업데이트도 같이 한다.
  */
 
-const batchForUpdateNew = async () => {};
+const calculator = async (numsOfRows: number) => {
+  const total = await checkTotalCountOfCris();
+  const iteration = Math.floor(total / numsOfRows);
+  return iteration;
+};
 
-const batchForUpdateEnd = async () => {};
+const updateOneByOne = async (inputData: ICrisInputData[]) => {
+  let affectedTotal = 0;
+  inputData.forEach(async (data) => {
+    data.isUpdate = true;
+    data.isNew = false;
+    const result: any = await crisInfoDao.crisInfoUpdateDao(data);
+    affectedTotal = affectedTotal + result.affected;
+  });
+  logger.info(affectedTotal);
+};
 
-const batchForUpdate = async () => {};
+const bulkDataForUpdate = async (page: number, rows: number) => {
+  const data = await getData(page, rows);
+  return await updateOneByOne(data);
+};
+
+const bulkAdd = async (page: number, rows: number) => {
+  const data = await getData(page, rows);
+  const result = await crisInfoDao.crisInfoAddDao(data);
+  logger.info(result.raw.affectedRows);
+  return result.raw.affectedRows;
+};
 
 /**
  * 목적: batch-process 작성
  * #########      TODO      ############
- * 1. 스케쥴러가 batch 실행
- * 2. 유휴시간대를 선택
- * 3. batch 는 다수의 작업을 일정하게 나눠서 실행. 1000개의 이미지를 100개씩 업로드.
+ * 1. 스케쥴러가 batch 실행 | api post 요청
+ * 2. 유휴시간대를 선택 | 관리자 등이 요청
+ * 3. batch 는 다수의 작업을 일정하게 나눠서 실행. 예:1000개의 이미지를 100개씩 업로드.
  * 4. batch pqueue 외부 모듈 사용함
  * 5. 동시에 promise 10 개 실행
  */
-const batchForInput = async () => {
-  const total = await checkTotalCountOfCris();
+const batchForUpdate = async () => {
   const numsOfRows = 50;
-  const iteration = Math.floor(total / numsOfRows);
+  const iteration = await calculator(numsOfRows);
 
   const queue = new PQueue({ concurrency: 10 });
-
-  const isUpdate = await selectInputOrUpdate();
-
-  if (isUpdate === 0) {
-    for (let i = 0; i <= iteration; i++) {
-      await queue.add(() => bulkInsert(i + 1, numsOfRows));
-    }
-  } else {
+  await bulkAdd(1, numsOfRows);
+  for (let i = 0; i <= iteration; i++) {
+    await queue.add(() => bulkDataForUpdate(i + 1, numsOfRows));
   }
 };
+
+const batchForInput = async () => {
+  const numsOfRows = 50;
+
+  const iteration = await calculator(numsOfRows);
+  const queue = new PQueue({ concurrency: 10 });
+
+  for (let i = 0; i <= iteration; i++) {
+    await queue.add(() => bulkInsert(i + 1, numsOfRows));
+  }
+};
+
+/**
+ * 목적: bulk insert 를 할지 아니면 bulk update 를 할지 결정한다.
+ */
+
+const selectorOfInputOrUpdate = async () => {
+  const choose = await selectInputOrUpdate();
+
+  return choose === 0 ? await batchForInput() : await batchForUpdate();
+};
+
+/**
+ * 목적: 스케쥴러로써 유휴시간대에 업데이트를 한다. 시간은 30분 정도 걸린다.
+ */
 
 export default {
   crisInfoInputService,
@@ -184,4 +242,5 @@ export default {
   getData,
   batchForInput,
   bulkInsert,
+  selectorOfInputOrUpdate,
 };
