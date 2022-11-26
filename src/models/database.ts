@@ -4,6 +4,7 @@
 
 import { DataSource } from "typeorm";
 import CrisInfo from "../entity/Crisinfo";
+import MetaData from "../entity/MetaData";
 
 /**
  * typeORM 사용. 데이터베이스와 연결 설정. 구동은 server.js 에서.
@@ -16,9 +17,9 @@ const database = new DataSource({
   username: process.env.TYPEORM_USERNAME,
   password: process.env.TYPEORM_PASSWORD,
   database: process.env.TYPEORM_DATABASE,
-  logging: false,
+  logging: true,
   synchronize: true,
-  entities: [CrisInfo],
+  entities: [CrisInfo, MetaData],
   charset: "utf8mb4",
 });
 
