@@ -11,9 +11,6 @@ class MetaData {
   id!: number;
 
   @Column({ type: "int", nullable: true, default: null })
-  totalCount!: number;
-
-  @Column({ type: "int", nullable: true, default: null })
   affectedRowsInput!: number;
 
   @Column({ type: "int", nullable: true, default: null })

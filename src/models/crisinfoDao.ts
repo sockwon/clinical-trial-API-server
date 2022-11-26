@@ -2,7 +2,6 @@ import database from "./database";
 import CrisInfo from "../entity/Crisinfo";
 import ICrisInputData from "../interfaces/Icrisinfo";
 import IMetaData from "../interfaces/IMetaData";
-import MetaData from "../entity/MetaData";
 
 const crisInfoInputDao = async (inputData: ICrisInputData[]) => {
   return await database
@@ -51,8 +50,8 @@ const mataDataDao = async (data: IMetaData) => {
   return await database.query(
     `
     INSERT 
-    INTO meta_data (meta_id, totalCount, affectedRowsInput, affectedRowsUpdate) 
-    VALUES (${data.meta_id},${data.totalCount},${data.affectedRowsInput},${data.affectedRowsUpdate}) 
+    INTO meta_data (meta_id, affectedRowsInput, affectedRowsUpdate) 
+    VALUES (${data.meta_id},${data.affectedRowsInput},${data.affectedRowsUpdate}) 
     ON DUPLICATE KEY UPDATE 
     affectedRowsInput=affectedRowsInput+${data.affectedRowsInput},
     affectedRowsUpdate=affectedRowsUpdate+${data.affectedRowsUpdate}

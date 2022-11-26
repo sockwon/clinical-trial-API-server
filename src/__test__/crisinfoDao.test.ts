@@ -224,17 +224,15 @@ describe("crisinfoDao test suite: 쓰기", () => {
     );
   });
 
-  test("mataDataDao metaData 테이블을 업데이트 할 수 있다", async () => {
+  test("mataDataDao 는 unique id 가 같다면 두 자료값을 차례로 합한다", async () => {
     const data1: IMetaData = {
       meta_id: "20221126",
       affectedRowsInput: 10,
       affectedRowsUpdate: 15,
-      totalCount: 10,
     };
 
     const data2: IMetaData = {
       meta_id: "20221126",
-      totalCount: 11,
       affectedRowsInput: 100,
       affectedRowsUpdate: 110,
     };
@@ -242,14 +240,44 @@ describe("crisinfoDao test suite: 쓰기", () => {
     await crisinfoDao.mataDataDao(data1);
     await crisinfoDao.mataDataDao(data2);
 
-    const result = await database
+    const result1 = await database
       .getRepository(MetaData)
       .createQueryBuilder("metaData")
       .where("meta_id=:meta_id", { meta_id: 20221126 })
       .getOne();
 
-    expect(result?.affectedRowsInput).toBe(110);
-    expect(result?.affectedRowsUpdate).toBe(125);
-    expect(result?.totalCount).not.toBe(11);
+    expect(result1?.affectedRowsInput).toBe(110);
+    expect(result1?.affectedRowsUpdate).toBe(125);
+  });
+
+  test("mataDataDao 는 unique id 가 다르다면 두 자료값은 두개의 row 값을 가진다", async () => {
+    const data1: IMetaData = {
+      meta_id: "20221126",
+      affectedRowsInput: 10,
+      affectedRowsUpdate: 15,
+    };
+
+    const data2: IMetaData = {
+      meta_id: "99999999",
+      affectedRowsInput: 100,
+      affectedRowsUpdate: 110,
+    };
+    await crisinfoDao.mataDataDao(data1);
+    await crisinfoDao.mataDataDao(data2);
+
+    const result1 = await database
+      .getRepository(MetaData)
+      .createQueryBuilder("metaData")
+      .where("meta_id=:meta_id", { meta_id: 20221126 })
+      .getOne();
+
+    const result2 = await database
+      .getRepository(MetaData)
+      .createQueryBuilder("metaData")
+      .where("meta_id=:meta_id", { meta_id: 99999999 })
+      .getOne();
+
+    expect(result1?.meta_id).toBe("20221126");
+    expect(result2?.meta_id).toBe("99999999");
   });
 });
