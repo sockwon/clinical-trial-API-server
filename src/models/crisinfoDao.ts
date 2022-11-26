@@ -1,6 +1,7 @@
 import database from "./database";
 import CrisInfo from "../entity/Crisinfo";
 import ICrisInputData from "../interfaces/Icrisinfo";
+import IMetaData from "../interfaces/IMetaData";
 
 const crisInfoInputDao = async (inputData: ICrisInputData[]) => {
   return await database
@@ -9,6 +10,7 @@ const crisInfoInputDao = async (inputData: ICrisInputData[]) => {
     .into(CrisInfo)
     .values(inputData)
     .orIgnore()
+    .updateEntity(false)
     .execute();
 };
 // const isEndDao = async () => {
@@ -31,17 +33,6 @@ const isEmptyDao = async (table: string) => {
   );
 };
 
-const crisInfoAddDao = async (inputData: ICrisInputData[]) => {
-  const result = await database
-    .createQueryBuilder()
-    .insert()
-    .into(CrisInfo)
-    .values(inputData)
-    .orIgnore()
-    .execute();
-  return result;
-};
-
 const crisInfoUpdateDao = async (inputData: ICrisInputData) => {
   const result = await database
     .createQueryBuilder()
@@ -55,9 +46,22 @@ const crisInfoUpdateDao = async (inputData: ICrisInputData) => {
   return result;
 };
 
+const mataDataDao = async (data: IMetaData) => {
+  return await database.query(
+    `
+    INSERT 
+    INTO meta_data (meta_id, affectedRowsInput, affectedRowsUpdate) 
+    VALUES (${data.meta_id},${data.affectedRowsInput},${data.affectedRowsUpdate}) 
+    ON DUPLICATE KEY UPDATE 
+    affectedRowsInput=affectedRowsInput+${data.affectedRowsInput},
+    affectedRowsUpdate=affectedRowsUpdate+${data.affectedRowsUpdate}
+    `
+  );
+};
+
 export default {
   crisInfoInputDao,
   isEmptyDao,
-  crisInfoAddDao,
   crisInfoUpdateDao,
+  mataDataDao,
 };

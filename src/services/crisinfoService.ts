@@ -8,7 +8,7 @@ import axios from "axios";
 import { erorrGenerator } from "../middlewares/errorGenerator";
 import PQueue from "p-queue";
 import { logger } from "../../config/winston";
-
+import IMetaData from "../interfaces/IMetaData";
 /**
  * 목적: validation data
  * 외부모듈인 Joi 사용
@@ -41,6 +41,17 @@ const schemaServiceKey = Joi.object({
   pageNum: Joi.number().required(),
   numOfRows: Joi.number().required(),
 });
+
+/**
+ * 결과값을 logging
+ */
+
+const loggingTask = async (data: IMetaData) => {
+  const uniqueKey = new Date().toISOString().substring(0, 10).replace(/-/g, "");
+  data.meta_id = uniqueKey;
+
+  await crisInfoDao.mataDataDao(data);
+};
 
 /**
  * 목적: open api 에 값을 요청함
@@ -148,8 +159,12 @@ const getData = async (page: number, rows: number) => {
 const bulkInsert = async (page: number, rows: number) => {
   const data = await getData(page, rows);
   const result = await crisInfoInputService(data);
-  // logger.info(result.raw.affectedRows);
-  // return result.raw.affectedRows;
+  const value: IMetaData = {
+    affectedRowsInput: result.raw.affectedRows,
+    affectedRowsUpdate: 0,
+  };
+
+  await loggingTask(value);
 };
 
 /**
@@ -175,7 +190,12 @@ const updateOneByOne = async (inputData: ICrisInputData[]) => {
     const result: any = await crisInfoDao.crisInfoUpdateDao(data);
     affectedTotal = affectedTotal + result.affected;
   });
-  logger.info(affectedTotal);
+  const value: IMetaData = {
+    affectedRowsUpdate: affectedTotal,
+    affectedRowsInput: 0,
+  };
+
+  await loggingTask(value);
 };
 
 const bulkDataForUpdate = async (page: number, rows: number) => {
@@ -185,7 +205,7 @@ const bulkDataForUpdate = async (page: number, rows: number) => {
 
 const bulkAdd = async (page: number, rows: number) => {
   const data = await getData(page, rows);
-  const result = await crisInfoDao.crisInfoAddDao(data);
+  const result = await crisInfoDao.crisInfoInputDao(data);
   logger.info(result.raw.affectedRows);
   return result.raw.affectedRows;
 };
@@ -204,7 +224,9 @@ const batchForUpdate = async () => {
   const iteration = await calculator(numsOfRows);
 
   const queue = new PQueue({ concurrency: 10 });
+
   await bulkAdd(1, numsOfRows);
+
   for (let i = 0; i <= iteration; i++) {
     await queue.add(() => bulkDataForUpdate(i + 1, numsOfRows));
   }

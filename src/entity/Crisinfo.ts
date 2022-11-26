@@ -6,7 +6,7 @@ import {
 } from "typeorm";
 
 @Entity()
-export class CrisInfo {
+class CrisInfo {
   @PrimaryGeneratedColumn()
   id!: number;
 

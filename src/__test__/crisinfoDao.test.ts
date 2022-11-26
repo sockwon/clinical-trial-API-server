@@ -13,6 +13,8 @@ import database from "../models/database";
 import CrisInfo from "../entity/Crisinfo";
 import crisinfoDao from "../models/crisinfoDao";
 import ICrisInputData from "../interfaces/Icrisinfo";
+import IMetaData from "../interfaces/IMetaData";
+import MetaData from "../entity/MetaData";
 
 describe("crisinfoDao test suite: 읽기", () => {
   const example = [
@@ -137,6 +139,7 @@ describe("crisinfoDao test suite: 쓰기", () => {
 
   afterEach(async () => {
     await database.query(`TRUNCATE TABLE cris_info`);
+    await database.query(`TRUNCATE TABLE meta_data`);
     await database.destroy();
   });
 
@@ -181,14 +184,8 @@ describe("crisinfoDao test suite: 쓰기", () => {
         phase_kr: "해당사항없음",
       },
     ];
-    const result = await crisinfoDao.crisInfoAddDao(rows);
+    const result = await crisinfoDao.crisInfoInputDao(rows);
     expect(result.raw.affectedRows).toBe(1);
-  });
-
-  test("bulk insert 를 한다", async () => {
-    await database.query(`TRUNCATE cris_info`);
-    const result = await crisinfoDao.crisInfoInputDao(example);
-    expect(result.raw.affectedRows).toBe(2);
   });
 
   test("date_updated 가 업데이트 됐다면 자료를 업데이트 한다", async () => {
@@ -225,5 +222,62 @@ describe("crisinfoDao test suite: 쓰기", () => {
     expect(value[0].crisInfo_results_type_date_completed_kr).toBe(
       "테스트대상3"
     );
+  });
+
+  test("mataDataDao 는 unique id 가 같다면 두 자료값을 차례로 합한다", async () => {
+    const data1: IMetaData = {
+      meta_id: "20221126",
+      affectedRowsInput: 10,
+      affectedRowsUpdate: 15,
+    };
+
+    const data2: IMetaData = {
+      meta_id: "20221126",
+      affectedRowsInput: 100,
+      affectedRowsUpdate: 110,
+    };
+
+    await crisinfoDao.mataDataDao(data1);
+    await crisinfoDao.mataDataDao(data2);
+
+    const result1 = await database
+      .getRepository(MetaData)
+      .createQueryBuilder("metaData")
+      .where("meta_id=:meta_id", { meta_id: 20221126 })
+      .getOne();
+
+    expect(result1?.affectedRowsInput).toBe(110);
+    expect(result1?.affectedRowsUpdate).toBe(125);
+  });
+
+  test("mataDataDao 는 unique id 가 다르다면 두 자료값은 두개의 row 값을 가진다", async () => {
+    const data1: IMetaData = {
+      meta_id: "20221126",
+      affectedRowsInput: 10,
+      affectedRowsUpdate: 15,
+    };
+
+    const data2: IMetaData = {
+      meta_id: "99999999",
+      affectedRowsInput: 100,
+      affectedRowsUpdate: 110,
+    };
+    await crisinfoDao.mataDataDao(data1);
+    await crisinfoDao.mataDataDao(data2);
+
+    const result1 = await database
+      .getRepository(MetaData)
+      .createQueryBuilder("metaData")
+      .where("meta_id=:meta_id", { meta_id: 20221126 })
+      .getOne();
+
+    const result2 = await database
+      .getRepository(MetaData)
+      .createQueryBuilder("metaData")
+      .where("meta_id=:meta_id", { meta_id: 99999999 })
+      .getOne();
+
+    expect(result1?.meta_id).toBe("20221126");
+    expect(result2?.meta_id).toBe("99999999");
   });
 });
