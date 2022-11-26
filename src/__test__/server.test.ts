@@ -4,6 +4,7 @@ dotenv.config();
 import request from "supertest";
 import database from "../models/database";
 import dbStart from "../../dbStart";
+import { logger } from "../../config/winston";
 
 import { createApp } from "../../app";
 import {
@@ -17,7 +18,7 @@ import {
 
 describe("server test:", () => {
   let app: any;
-  const consoleSpy = jest.spyOn(console, "log");
+  const consoleSpy = jest.spyOn(logger, "info");
   beforeAll(async () => {
     app = createApp();
   });

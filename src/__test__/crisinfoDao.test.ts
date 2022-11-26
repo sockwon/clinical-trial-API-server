@@ -73,7 +73,7 @@ describe("crisinfoDao test suite: 읽기", () => {
     await database.destroy();
   });
 
-  test("현재 3개의 데이터가 테이블에 있으므로 반환값은 3이 나와야 한다.", async () => {
+  test("현재 2개의 데이터가 테이블에 있으므로 반환값은 2이 나와야 한다.", async () => {
     const value = await crisinfoDao.isEmptyDao("cris_info");
     const result = value[0]["COUNT(*)"];
 
@@ -140,18 +140,6 @@ describe("crisinfoDao test suite: 쓰기", () => {
     await database.destroy();
   });
 
-  test("오늘 날짜에 비추어 date_completed 가 과거일 때 isEnd 값을 true, isUpdate 값을 false 로 바꿔준다", async () => {
-    const value = await crisinfoDao.isEndDao();
-
-    const result = await database
-      .getRepository(CrisInfo)
-      .createQueryBuilder("crisinfo")
-      .where("crisinfo.trial_id=:trial_id", { trial_id: "KCT0007932" })
-      .getOne();
-
-    expect(result?.isEnd).toBe(true);
-  });
-
   test("unique 키가 중복인 경우를 제외하고 row 추가", async () => {
     const rows: ICrisInputData[] = [
       {
@@ -200,7 +188,6 @@ describe("crisinfoDao test suite: 쓰기", () => {
   test("bulk insert 를 한다", async () => {
     await database.query(`TRUNCATE cris_info`);
     const result = await crisinfoDao.crisInfoInputDao(example);
-
     expect(result.raw.affectedRows).toBe(2);
   });
 
@@ -238,24 +225,5 @@ describe("crisinfoDao test suite: 쓰기", () => {
     expect(value[0].crisInfo_results_type_date_completed_kr).toBe(
       "테스트대상3"
     );
-  });
-
-  test("update 가 됐다면 isUpdate 를 true 로 바꾼다", async () => {
-    // await database
-    //   .createQueryBuilder()
-    //   .update(CrisInfo)
-    //   .set({ phase_kr: "테스트" })
-    //   .where("trial_id =:trial_id", { trial_id: "KCT0007932" })
-    //   .execute();
-
-    const value = await database
-      .getRepository(CrisInfo)
-      .createQueryBuilder("crisInfo")
-      .where("crisInfo.trial_id =:trial_id", { trial_id: "KCT0007932" })
-      .execute();
-
-    const result = await crisinfoDao.isUpdatedDao();
-    expect(result.changedRows).toBe(1);
-    expect(value).toBe("");
   });
 });

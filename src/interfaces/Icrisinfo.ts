@@ -14,4 +14,6 @@ export default interface ICrisInputData {
   source_name_kr: string;
   primary_sponsor_kr: string;
   primary_outcome_1_kr: string;
+  isUpdate?: boolean;
+  isNew?: boolean;
 }

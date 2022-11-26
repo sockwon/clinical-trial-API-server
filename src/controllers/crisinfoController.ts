@@ -6,8 +6,7 @@ import crisinfoService from "../services/crisinfoService";
  * result 는 input 에 따른 결과값으로 new -> rows , update -> rows
  */
 const crisInfoInputControll = async (req: Request, res: Response) => {
-  const result = await crisinfoService.batchForInput();
-  console.log(result);
+  const result = await crisinfoService.selectorOfInputOrUpdate();
   res.status(201).json(result);
 };
 

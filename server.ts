@@ -7,6 +7,7 @@ dotenv.config();
 
 import { createApp } from "./app";
 import dbStart from "./dbStart";
+import { logger } from "./config/winston";
 
 /**
  * Initialize the server.
@@ -23,7 +24,7 @@ const startServer = async () => {
   await dbStart();
 
   app.listen(PORT, () => {
-    console.log(`Listening on Port ${PORT}`);
+    logger.info(`Listening on Port ${PORT}`);
   });
 };
 
