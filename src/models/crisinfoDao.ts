@@ -2,6 +2,7 @@ import database from "./database";
 import CrisInfo from "../entity/Crisinfo";
 import ICrisInputData from "../interfaces/Icrisinfo";
 import IMetaData from "../interfaces/IMetaData";
+import MetaData from "../entity/MetaData";
 
 const crisInfoInputDao = async (inputData: ICrisInputData[]) => {
   return await database
@@ -58,10 +59,18 @@ const mataDataDao = async (data: IMetaData) => {
     `
   );
 };
+const getMetaData = async () => {
+  return await database.query(
+    `
+    SELECT * FROM meta_data ORDER BY id DESC LIMIT 1;
+    `
+  );
+};
 
 export default {
   crisInfoInputDao,
   isEmptyDao,
   crisInfoUpdateDao,
   mataDataDao,
+  getMetaData,
 };

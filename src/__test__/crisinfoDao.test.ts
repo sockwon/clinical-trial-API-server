@@ -280,4 +280,19 @@ describe("crisinfoDao test suite: 쓰기", () => {
     expect(result1?.meta_id).toBe("20221126");
     expect(result2?.meta_id).toBe("99999999");
   });
+
+  test("가장 마지막 추가된 행을 읽는다", async () => {
+    const data1: IMetaData = {
+      meta_id: "20221126",
+      affectedRowsInput: 10,
+      affectedRowsUpdate: 15,
+    };
+    await crisinfoDao.mataDataDao(data1);
+
+    const result = await crisinfoDao.getMetaData();
+
+    expect(result[0].meta_id).toBe("20221126");
+    expect(result[0].affectedRowsInput).toBe(10);
+    expect(result[0].affectedRowsUpdate).toBe(15);
+  });
 });

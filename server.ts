@@ -8,6 +8,7 @@ dotenv.config();
 import { createApp } from "./app";
 import dbStart from "./dbStart";
 import { logger } from "./config/winston";
+import service from "./src/services/crisinfoService";
 
 /**
  * Initialize the server.
@@ -26,6 +27,8 @@ const startServer = async () => {
   app.listen(PORT, () => {
     logger.info(`Listening on Port ${PORT}`);
   });
+
+  service.taskManager();
 };
 
 startServer();
