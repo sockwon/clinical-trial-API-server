@@ -9,6 +9,8 @@ import { erorrGenerator } from "../middlewares/errorGenerator";
 import PQueue from "p-queue";
 import { logger } from "../../config/winston";
 import IMetaData from "../interfaces/IMetaData";
+import cron from "node-cron";
+
 /**
  * 목적: validation data
  * 외부모듈인 Joi 사용
@@ -198,7 +200,7 @@ const updateOneByOne = async (inputData: ICrisInputData[]) => {
   await loggingTask(value);
 };
 
-const bulkDataForUpdate = async (page: number, rows: number) => {
+const bulkUpdate = async (page: number, rows: number) => {
   const data = await getData(page, rows);
   return await updateOneByOne(data);
 };
@@ -228,7 +230,7 @@ const batchForUpdate = async () => {
   await bulkAdd(1, numsOfRows);
 
   for (let i = 0; i <= iteration; i++) {
-    await queue.add(() => bulkDataForUpdate(i + 1, numsOfRows));
+    await queue.add(() => bulkUpdate(i + 1, numsOfRows));
   }
 };
 
@@ -249,13 +251,25 @@ const batchForInput = async () => {
 
 const selectorOfInputOrUpdate = async () => {
   const choose = await selectInputOrUpdate();
-
+  console.log("selectorOfInputOrUpdate: ", choose);
   return choose === 0 ? await batchForInput() : await batchForUpdate();
 };
 
 /**
  * 목적: 스케쥴러로써 유휴시간대에 업데이트를 한다. 시간은 30분 정도 걸린다.
  */
+
+const taskManager = () => {
+  logger.info("taskManager activated");
+  cron.schedule("45 7 * * *", async () => {
+    logger.info("start update");
+    await selectorOfInputOrUpdate();
+    const result = await crisInfoDao.getMetaData();
+    logger.info(
+      `affectedRowsAdd: ${result[0].affectedRowsInput}, affectedRowsUpdate: ${result[0].affectedRowsUpdate}`
+    );
+  });
+};
 
 export default {
   crisInfoInputService,
@@ -265,4 +279,6 @@ export default {
   batchForInput,
   bulkInsert,
   selectorOfInputOrUpdate,
+  bulkUpdate,
+  taskManager,
 };
