@@ -74,10 +74,9 @@ const getCrisInfoFromOpenAPI = async (page: number, rows: number) => {
 
   await schemaServiceKey.validateAsync({ serviceKey, pageNum, numOfRows });
 
-  const rawData = await axios({
-    method: "get",
-    url: `http://apis.data.go.kr/1352159/crisinfodataview/list?serviceKey=${serviceKey}&resultType=JSON&pageNo=${pageNum}&numOfRows=${numOfRows}`,
-  });
+  const rawData = await axios.get(
+    `http://apis.data.go.kr/1352159/crisinfodataview/list?serviceKey=${serviceKey}&resultType=JSON&pageNo=${pageNum}&numOfRows=${numOfRows}`
+  );
 
   if (rawData.data.items.length === 0) {
     erorrGenerator(204, "no contents");
@@ -135,8 +134,9 @@ const selectInputOrUpdate = async () => {
   const rows = await crisInfoDao.isEmptyDao("cris_info");
   const numsOfRows = Number(rows[0]["COUNT(*)"]);
   const total = await checkTotalCountOfCris();
+  console.log(numsOfRows);
 
-  console.log("total - numsOfRows:", total - numsOfRows);
+  logger.info("total - numsOfRows:", total - numsOfRows);
   if (numsOfRows === 0) return 0;
   if (total - numsOfRows > 50) return 0;
 
@@ -275,10 +275,12 @@ export default {
   crisInfoInputService,
   getCrisInfoFromOpenAPI,
   selectInputOrUpdate,
+  checkTotalCountOfCris,
   getData,
   batchForInput,
   bulkInsert,
   selectorOfInputOrUpdate,
   bulkUpdate,
   taskManager,
+  loggingTask,
 };
