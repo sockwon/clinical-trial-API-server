@@ -125,20 +125,28 @@ const checkTotalCountOfCris = async () => {
 
 const crisInfoInputService = async (inputData: ICrisInputData[]) => {
   await schemaInputArray.validateAsync(inputData);
-
   const result = await crisInfoDao.crisInfoInputDao(inputData);
   return result;
 };
 
-const selectInputOrUpdate = async () => {
+const difference = async () => {
   const rows = await crisInfoDao.isEmptyDao("cris_info");
   const numsOfRows = Number(rows[0]["COUNT(*)"]);
-  const total = await checkTotalCountOfCris();
-  console.log(numsOfRows);
+  const totalCount = await checkTotalCountOfCris();
 
-  logger.info("total - numsOfRows:", total - numsOfRows);
-  if (numsOfRows === 0) return 0;
-  if (total - numsOfRows > 50) return 0;
+  const result = {
+    numsOfRows,
+    diffrence: totalCount - numsOfRows,
+  };
+
+  return result;
+};
+
+const selectInputOrUpdate = async () => {
+  const value = await difference();
+
+  if (value.numsOfRows === 0) return 0;
+  if (value.diffrence > 50) return 0;
 
   return true;
 };
@@ -208,7 +216,6 @@ const bulkUpdate = async (page: number, rows: number) => {
 const bulkAdd = async (page: number, rows: number) => {
   const data = await getData(page, rows);
   const result = await crisInfoDao.crisInfoInputDao(data);
-  logger.info(result.raw.affectedRows);
   return result.raw.affectedRows;
 };
 
@@ -283,4 +290,5 @@ export default {
   bulkUpdate,
   taskManager,
   loggingTask,
+  difference,
 };
