@@ -84,6 +84,18 @@ describe("비즈니스 로직 테스트", () => {
     expect(result).toBe(0);
   });
 
+  test("bulkinsert: 3개를 입력", async () => {
+    await crisInfoService.bulkInsert(1, 3);
+    const result = database.query(
+      `
+      SELECT COUNT(*) FROM cris_info
+      `
+    );
+    expect(result).toBe(3);
+  });
+});
+
+describe("mocking", () => {
   test("getCrisInfoFromOpenAPI: axios 외부 모듈 호출", async () => {
     const spyGet = jest.spyOn(axios, "get");
 

@@ -67,10 +67,20 @@ const getMetaData = async () => {
   );
 };
 
+const isNewDao = async () => {
+  const thirtyDays = 1000 * 60 * 60 * 24 * 30;
+  return await database.query(
+    `
+    UPDATE cris_info SET isNew=false WHERE date_registration <= NOW()-${thirtyDays}
+    `
+  );
+};
+
 export default {
   crisInfoInputDao,
   isEmptyDao,
   crisInfoUpdateDao,
   mataDataDao,
   getMetaData,
+  isNewDao,
 };

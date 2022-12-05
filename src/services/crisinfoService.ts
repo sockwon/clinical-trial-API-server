@@ -169,10 +169,12 @@ const getData = async (page: number, rows: number) => {
 const bulkInsert = async (page: number, rows: number) => {
   const data = await getData(page, rows);
   const result = await crisInfoInputService(data);
+  console.log(`crisInfoInputService 통과`, result);
   const value: IMetaData = {
     affectedRowsInput: result.raw.affectedRows,
     affectedRowsUpdate: 0,
   };
+  console.log("value 통과", value);
 
   await loggingTask(value);
 };
@@ -234,7 +236,12 @@ const batchForUpdate = async () => {
 
   const queue = new PQueue({ concurrency: 10 });
 
-  await bulkAdd(1, numsOfRows);
+  const result = await bulkAdd(1, numsOfRows);
+  const value = {
+    affectedRowsUpdate: 0,
+    affectedRowsInput: result,
+  };
+  await loggingTask(value);
 
   for (let i = 0; i <= iteration; i++) {
     await queue.add(() => bulkUpdate(i + 1, numsOfRows));
@@ -258,7 +265,8 @@ const batchForInput = async () => {
 
 const selectorOfInputOrUpdate = async () => {
   const choose = await selectInputOrUpdate();
-  console.log("selectorOfInputOrUpdate: ", choose);
+  const text = choose === true ? "update" : "input";
+  logger.info("selectorOfInputOrUpdate: ", text);
   return choose === 0 ? await batchForInput() : await batchForUpdate();
 };
 
@@ -268,7 +276,7 @@ const selectorOfInputOrUpdate = async () => {
 
 const taskManager = () => {
   logger.info("taskManager activated");
-  cron.schedule("45 7 * * *", async () => {
+  cron.schedule("0 21 * * *", async () => {
     logger.info("start update");
     await selectorOfInputOrUpdate();
     const result = await crisInfoDao.getMetaData();
@@ -276,6 +284,9 @@ const taskManager = () => {
       `affectedRowsAdd: ${result[0].affectedRowsInput}, affectedRowsUpdate: ${result[0].affectedRowsUpdate}`
     );
   });
+
+  //isNew 는 임상 논문 등재일로부터 한달이내인 경우 true, 나머지 경우는 false 로 한다.
+  //new Date() - date_regi 를 사용한다. 스케쥴러는 cron 으로 작성하고 mysql 의 쿼리문을 작성한다.
 };
 
 export default {
