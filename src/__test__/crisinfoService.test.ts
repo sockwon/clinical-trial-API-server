@@ -44,10 +44,10 @@ describe("비즈니스 로직 테스트", () => {
 
   beforeEach(async () => {
     await database.initialize();
+    jest.clearAllMocks();
   });
 
   afterEach(async () => {
-    jest.fn().mockClear();
     await database.query(`TRUNCATE cris_info`);
     await database.query(`TRUNCATE meta_data`);
     await database.destroy();
@@ -67,20 +67,6 @@ describe("비즈니스 로직 테스트", () => {
     expect(crisinfoDao.mataDataDao).toBeCalledTimes(1);
   });
 
-  test("getCrisInfoFromOpenAPI: axios 외부 모듈 호출", async () => {
-    const spyGet = jest.spyOn(axios, "get");
-
-    await crisInfoService.getCrisInfoFromOpenAPI(1, 10);
-    expect(spyGet).toBeCalledTimes(1);
-  });
-
-  test("getCrisInfoFromOpenAPI: rawData.data.items 가 텅 비었다면 error를 던진다", async () => {
-    axios.get = jest.fn<any>().mockResolvedValue({ data: { items: [] } });
-    await expect(crisInfoService.getCrisInfoFromOpenAPI(1, 11)).rejects.toThrow(
-      "no contents"
-    );
-  });
-
   test("crisInfoInputService: crisInfoInputDao 함수를 호출함", async () => {
     const inputData = [example];
 
@@ -98,19 +84,29 @@ describe("비즈니스 로직 테스트", () => {
     expect(result).toBe(0);
   });
 
-  // test("selectInputOrUpdate: cris_info 테이블에 자료가 있으므로 결과값이 1이 나와야 한다.", async () => {
-  //   await database
-  //     .createQueryBuilder()
-  //     .insert()
-  //     .into(CrisInfo)
-  //     .values(example)
-  //     .execute();
-
-  //   let checkTotalCountOfCris = crisInfoService.checkTotalCountOfCris;
-  //   checkTotalCountOfCris = jest.fn<typeof checkTotalCountOfCris>();
-
-  //   await crisInfoService.selectInputOrUpdate();
-
-  //   expect(checkTotalCountOfCris).toBeCalledTimes(1);
+  // test("bulkinsert: 3개를 입력", async () => {
+  //   await crisInfoService.bulkInsert(1, 3);
+  //   const result = database.query(
+  //     `
+  //     SELECT COUNT(*) FROM cris_info
+  //     `
+  //   );
+  //   expect(result).toBe(3);
   // });
+});
+
+describe("mocking", () => {
+  test("getCrisInfoFromOpenAPI: axios 외부 모듈 호출", async () => {
+    const spyGet = jest.spyOn(axios, "get");
+
+    await crisInfoService.getCrisInfoFromOpenAPI(1, 10);
+    expect(spyGet).toBeCalledTimes(1);
+  });
+
+  test("getCrisInfoFromOpenAPI: rawData.data.items 가 텅 비었다면 error를 던진다", async () => {
+    axios.get = jest.fn<any>().mockResolvedValue({ data: { items: [] } });
+    await expect(crisInfoService.getCrisInfoFromOpenAPI(1, 11)).rejects.toThrow(
+      "no contents"
+    );
+  });
 });

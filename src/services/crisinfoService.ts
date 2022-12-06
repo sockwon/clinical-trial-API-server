@@ -52,7 +52,8 @@ const loggingTask = async (data: IMetaData) => {
   const uniqueKey = new Date().toISOString().substring(0, 10).replace(/-/g, "");
   data.meta_id = uniqueKey;
 
-  await crisInfoDao.mataDataDao(data);
+  const result = await crisInfoDao.mataDataDao(data);
+  logger.info("loggingTask", result, "실험");
 };
 
 /**
@@ -125,20 +126,28 @@ const checkTotalCountOfCris = async () => {
 
 const crisInfoInputService = async (inputData: ICrisInputData[]) => {
   await schemaInputArray.validateAsync(inputData);
-
   const result = await crisInfoDao.crisInfoInputDao(inputData);
   return result;
 };
 
-const selectInputOrUpdate = async () => {
+const difference = async () => {
   const rows = await crisInfoDao.isEmptyDao("cris_info");
   const numsOfRows = Number(rows[0]["COUNT(*)"]);
-  const total = await checkTotalCountOfCris();
-  console.log(numsOfRows);
+  const totalCount = await checkTotalCountOfCris();
 
-  logger.info("total - numsOfRows:", total - numsOfRows);
-  if (numsOfRows === 0) return 0;
-  if (total - numsOfRows > 50) return 0;
+  const result = {
+    numsOfRows,
+    diffrence: totalCount - numsOfRows,
+  };
+
+  return result;
+};
+
+const selectInputOrUpdate = async () => {
+  const value = await difference();
+
+  if (value.numsOfRows === 0) return 0;
+  if (value.diffrence > 50) return 0;
 
   return true;
 };
@@ -186,12 +195,18 @@ const calculator = async (numsOfRows: number) => {
 
 const updateOneByOne = async (inputData: ICrisInputData[]) => {
   let affectedTotal = 0;
+  let count = 0;
+
   inputData.forEach(async (data) => {
     data.isUpdate = true;
-    data.isNew = false;
     const result: any = await crisInfoDao.crisInfoUpdateDao(data);
+    count++;
     affectedTotal = affectedTotal + result.affected;
+    console.log(inputData.length, count, "affectedTotal:", affectedTotal);
   });
+
+  console.log("updateOneByOne affectedTotal:", affectedTotal, count);
+
   const value: IMetaData = {
     affectedRowsUpdate: affectedTotal,
     affectedRowsInput: 0,
@@ -206,9 +221,10 @@ const bulkUpdate = async (page: number, rows: number) => {
 };
 
 const bulkAdd = async (page: number, rows: number) => {
+  logger.info("activate bulkadd");
   const data = await getData(page, rows);
   const result = await crisInfoDao.crisInfoInputDao(data);
-  logger.info(result.raw.affectedRows);
+
   return result.raw.affectedRows;
 };
 
@@ -222,12 +238,18 @@ const bulkAdd = async (page: number, rows: number) => {
  * 5. 동시에 promise 10 개 실행
  */
 const batchForUpdate = async () => {
+  logger.info("start update");
   const numsOfRows = 50;
   const iteration = await calculator(numsOfRows);
 
   const queue = new PQueue({ concurrency: 10 });
 
-  await bulkAdd(1, numsOfRows);
+  const result = await bulkAdd(1, numsOfRows);
+  const value = {
+    affectedRowsUpdate: 0,
+    affectedRowsInput: result,
+  };
+  await loggingTask(value);
 
   for (let i = 0; i <= iteration; i++) {
     await queue.add(() => bulkUpdate(i + 1, numsOfRows));
@@ -235,6 +257,7 @@ const batchForUpdate = async () => {
 };
 
 const batchForInput = async () => {
+  logger.info("start input");
   const numsOfRows = 50;
 
   const iteration = await calculator(numsOfRows);
@@ -251,7 +274,7 @@ const batchForInput = async () => {
 
 const selectorOfInputOrUpdate = async () => {
   const choose = await selectInputOrUpdate();
-  console.log("selectorOfInputOrUpdate: ", choose);
+
   return choose === 0 ? await batchForInput() : await batchForUpdate();
 };
 
@@ -261,14 +284,18 @@ const selectorOfInputOrUpdate = async () => {
 
 const taskManager = () => {
   logger.info("taskManager activated");
-  cron.schedule("45 7 * * *", async () => {
-    logger.info("start update");
+  cron.schedule("31 15 * * *", async () => {
     await selectorOfInputOrUpdate();
     const result = await crisInfoDao.getMetaData();
     logger.info(
-      `affectedRowsAdd: ${result[0].affectedRowsInput}, affectedRowsUpdate: ${result[0].affectedRowsUpdate}`
+      `affectedRowsInput: ${result[0].affectedRowsInput}, affectedRowsUpdate: ${result[0].affectedRowsUpdate}`
     );
+    const a = await crisInfoDao.isNewDao();
+    logger.info("new cris_info within a month: ", a);
   });
+
+  //isNew 는 임상 논문 등재일로부터 한달이내인 경우 true, 나머지 경우는 false 로 한다.
+  //new Date() - date_regi 를 사용한다. 스케쥴러는 cron 으로 작성하고 mysql 의 쿼리문을 작성한다.
 };
 
 export default {
@@ -283,4 +310,5 @@ export default {
   bulkUpdate,
   taskManager,
   loggingTask,
+  difference,
 };
