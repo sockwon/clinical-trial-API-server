@@ -52,7 +52,8 @@ const loggingTask = async (data: IMetaData) => {
   const uniqueKey = new Date().toISOString().substring(0, 10).replace(/-/g, "");
   data.meta_id = uniqueKey;
 
-  await crisInfoDao.mataDataDao(data);
+  const result = await crisInfoDao.mataDataDao(data);
+  logger.info("loggingTask", result, "실험");
 };
 
 /**
@@ -169,12 +170,10 @@ const getData = async (page: number, rows: number) => {
 const bulkInsert = async (page: number, rows: number) => {
   const data = await getData(page, rows);
   const result = await crisInfoInputService(data);
-  console.log(`crisInfoInputService 통과`, result);
   const value: IMetaData = {
     affectedRowsInput: result.raw.affectedRows,
     affectedRowsUpdate: 0,
   };
-  console.log("value 통과", value);
 
   await loggingTask(value);
 };
@@ -196,12 +195,18 @@ const calculator = async (numsOfRows: number) => {
 
 const updateOneByOne = async (inputData: ICrisInputData[]) => {
   let affectedTotal = 0;
+  let count = 0;
+
   inputData.forEach(async (data) => {
     data.isUpdate = true;
-    data.isNew = false;
     const result: any = await crisInfoDao.crisInfoUpdateDao(data);
+    count++;
     affectedTotal = affectedTotal + result.affected;
+    console.log(inputData.length, count, "affectedTotal:", affectedTotal);
   });
+
+  console.log("updateOneByOne affectedTotal:", affectedTotal, count);
+
   const value: IMetaData = {
     affectedRowsUpdate: affectedTotal,
     affectedRowsInput: 0,
@@ -216,8 +221,10 @@ const bulkUpdate = async (page: number, rows: number) => {
 };
 
 const bulkAdd = async (page: number, rows: number) => {
+  logger.info("activate bulkadd");
   const data = await getData(page, rows);
   const result = await crisInfoDao.crisInfoInputDao(data);
+
   return result.raw.affectedRows;
 };
 
@@ -231,6 +238,7 @@ const bulkAdd = async (page: number, rows: number) => {
  * 5. 동시에 promise 10 개 실행
  */
 const batchForUpdate = async () => {
+  logger.info("start update");
   const numsOfRows = 50;
   const iteration = await calculator(numsOfRows);
 
@@ -249,6 +257,7 @@ const batchForUpdate = async () => {
 };
 
 const batchForInput = async () => {
+  logger.info("start input");
   const numsOfRows = 50;
 
   const iteration = await calculator(numsOfRows);
@@ -265,8 +274,7 @@ const batchForInput = async () => {
 
 const selectorOfInputOrUpdate = async () => {
   const choose = await selectInputOrUpdate();
-  const text = choose === true ? "update" : "input";
-  logger.info("selectorOfInputOrUpdate: ", text);
+
   return choose === 0 ? await batchForInput() : await batchForUpdate();
 };
 
@@ -276,13 +284,14 @@ const selectorOfInputOrUpdate = async () => {
 
 const taskManager = () => {
   logger.info("taskManager activated");
-  cron.schedule("0 21 * * *", async () => {
-    logger.info("start update");
+  cron.schedule("31 15 * * *", async () => {
     await selectorOfInputOrUpdate();
     const result = await crisInfoDao.getMetaData();
     logger.info(
-      `affectedRowsAdd: ${result[0].affectedRowsInput}, affectedRowsUpdate: ${result[0].affectedRowsUpdate}`
+      `affectedRowsInput: ${result[0].affectedRowsInput}, affectedRowsUpdate: ${result[0].affectedRowsUpdate}`
     );
+    const a = await crisInfoDao.isNewDao();
+    logger.info("new cris_info within a month: ", a);
   });
 
   //isNew 는 임상 논문 등재일로부터 한달이내인 경우 true, 나머지 경우는 false 로 한다.
