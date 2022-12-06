@@ -53,7 +53,7 @@ const loggingTask = async (data: IMetaData) => {
   data.meta_id = uniqueKey;
 
   const result = await crisInfoDao.mataDataDao(data);
-  logger.info("loggingTask", result, "실험");
+  logger.info(`loggingTask ${result}`);
 };
 
 /**
@@ -168,6 +168,8 @@ const getData = async (page: number, rows: number) => {
 };
 
 const bulkInsert = async (page: number, rows: number) => {
+  console.log("page:", page);
+
   const data = await getData(page, rows);
   const result = await crisInfoInputService(data);
   const value: IMetaData = {
@@ -194,28 +196,20 @@ const calculator = async (numsOfRows: number) => {
 };
 
 const updateOneByOne = async (inputData: ICrisInputData[]) => {
-  let affectedTotal = 0;
-  let count = 0;
-
   inputData.forEach(async (data) => {
-    data.isUpdate = true;
     const result: any = await crisInfoDao.crisInfoUpdateDao(data);
-    count++;
-    affectedTotal = affectedTotal + result.affected;
-    console.log(inputData.length, count, "affectedTotal:", affectedTotal);
+    if (result.affected != 0) {
+      const value: IMetaData = {
+        affectedRowsUpdate: result.affected,
+        affectedRowsInput: 0,
+      };
+      await loggingTask(value);
+    }
   });
-
-  console.log("updateOneByOne affectedTotal:", affectedTotal, count);
-
-  const value: IMetaData = {
-    affectedRowsUpdate: affectedTotal,
-    affectedRowsInput: 0,
-  };
-
-  await loggingTask(value);
 };
 
 const bulkUpdate = async (page: number, rows: number) => {
+  console.log("page:", page);
   const data = await getData(page, rows);
   return await updateOneByOne(data);
 };
@@ -284,14 +278,14 @@ const selectorOfInputOrUpdate = async () => {
 
 const taskManager = () => {
   logger.info("taskManager activated");
-  cron.schedule("31 15 * * *", async () => {
+  cron.schedule("4 21 * * *", async () => {
     await selectorOfInputOrUpdate();
     const result = await crisInfoDao.getMetaData();
     logger.info(
       `affectedRowsInput: ${result[0].affectedRowsInput}, affectedRowsUpdate: ${result[0].affectedRowsUpdate}`
     );
-    const a = await crisInfoDao.isNewDao();
-    logger.info("new cris_info within a month: ", a);
+    await crisInfoDao.isUpdateDao();
+    logger.info("update cris_info within a week");
   });
 
   //isNew 는 임상 논문 등재일로부터 한달이내인 경우 true, 나머지 경우는 false 로 한다.

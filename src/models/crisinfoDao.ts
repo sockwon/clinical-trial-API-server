@@ -67,14 +67,21 @@ const getMetaData = async () => {
   );
 };
 
-const isNewDao = async () => {
-  const thirtyDays = 1000 * 60 * 60 * 24 * 30;
+const isUpdateDao = async () => {
+  const thirtyDays = 1000 * 60 * 60 * 24 * 7;
   const date: Date = new Date();
   const temp = date.getTime() - thirtyDays;
   const a = new Date(temp);
+  const b = `${a.getFullYear()}-${a.getMonth() + 1}-${a.getDate()}`;
+  console.log(a);
+  await database.query(
+    `
+    UPDATE cris_info SET isUpdate=false
+    `
+  );
   return await database.query(
     `
-    UPDATE cris_info SET isNew=true WHERE date_registration>='${a}'
+    UPDATE cris_info SET isUpdate=true WHERE date_updated>'${b}'
     `
   );
 };
@@ -85,5 +92,5 @@ export default {
   crisInfoUpdateDao,
   mataDataDao,
   getMetaData,
-  isNewDao,
+  isUpdateDao,
 };
