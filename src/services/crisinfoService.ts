@@ -48,12 +48,13 @@ const schemaServiceKey = Joi.object({
  * 결과값을 logging
  */
 
+//FIXME: loggingTask 가 update 작업보다 앞서 실행된다. 고치자
 const loggingTask = async (data: IMetaData) => {
   const uniqueKey = new Date().toISOString().substring(0, 10).replace(/-/g, "");
   data.meta_id = uniqueKey;
 
-  const result = await crisInfoDao.mataDataDao(data);
-  logger.info(`loggingTask ${result}`);
+  await crisInfoDao.mataDataDao(data);
+  logger.info(`loggerTask activated ${uniqueKey}`);
 };
 
 /**
@@ -278,18 +279,24 @@ const selectorOfInputOrUpdate = async () => {
 
 const taskManager = () => {
   logger.info("taskManager activated");
-  cron.schedule("4 21 * * *", async () => {
+  cron.schedule("33 13 * * *", async () => {
     await selectorOfInputOrUpdate();
     const result = await crisInfoDao.getMetaData();
     logger.info(
       `affectedRowsInput: ${result[0].affectedRowsInput}, affectedRowsUpdate: ${result[0].affectedRowsUpdate}`
     );
     await crisInfoDao.isUpdateDao();
-    logger.info("update cris_info within a week");
+    await crisInfoDao.isNewDao();
+    logger.info("update or input done");
   });
 
   //isNew 는 임상 논문 등재일로부터 한달이내인 경우 true, 나머지 경우는 false 로 한다.
   //new Date() - date_regi 를 사용한다. 스케쥴러는 cron 으로 작성하고 mysql 의 쿼리문을 작성한다.
+};
+
+const getList = async (pageNum: number) => {
+  const result = await crisInfoDao.getListDao(pageNum);
+  return result;
 };
 
 export default {
@@ -305,4 +312,5 @@ export default {
   taskManager,
   loggingTask,
   difference,
+  getList,
 };

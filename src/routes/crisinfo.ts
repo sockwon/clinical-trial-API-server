@@ -10,4 +10,6 @@ router.post(
   errorHandlerAsync(crisinfoController.crisInfoInputControll)
 );
 
+router.get("/list", errorHandlerAsync(crisinfoController.getListControll));
+
 export default router;
