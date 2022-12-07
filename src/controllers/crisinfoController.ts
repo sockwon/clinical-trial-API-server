@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { number } from "joi";
+import { number, string } from "joi";
 import crisInfoService from "../services/crisinfoService";
 
 /**
@@ -17,7 +17,14 @@ const getListControll = async (req: Request, res: Response) => {
   res.status(200).json(result);
 };
 
+const getListViewControll = async (req: Request, res: Response) => {
+  const { trial_id } = req.query;
+  const result = await crisInfoService.getListView(String(trial_id));
+  res.status(200).json(result);
+};
+
 export default {
   crisInfoInputControll,
   getListControll,
+  getListViewControll,
 };

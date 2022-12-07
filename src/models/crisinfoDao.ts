@@ -106,7 +106,7 @@ const isNewDao = async () => {
 };
 
 /**
- * TODO: list get
+ * list get
  * 1.isNew, isUpdate 를 가장 먼저 보여준다.
  * 2.페이지 네이션 구현(offset, limit)
  * 3.
@@ -128,6 +128,19 @@ const getListDao = async (pageNum: number) => {
     .getMany();
 };
 
+/**
+ * list 정보를 자세히 보여준다
+ * 1.trial_id 로 검색한다.
+ */
+
+const getListViewDao = async (trialId: string) => {
+  return await database
+    .getRepository(CrisInfo)
+    .createQueryBuilder("crisInfo")
+    .where("trial_id =:trial_id", { trial_id: trialId })
+    .getOne();
+};
+
 export default {
   crisInfoInputDao,
   isEmptyDao,
@@ -137,4 +150,5 @@ export default {
   isUpdateDao,
   isNewDao,
   getListDao,
+  getListViewDao,
 };

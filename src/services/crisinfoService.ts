@@ -44,6 +44,16 @@ const schemaServiceKey = Joi.object({
   numOfRows: Joi.number().required(),
 });
 
+const schemaGetList = Joi.object({
+  pageNum: Joi.number().integer().positive().min(1).required(),
+});
+
+const schemaGetListView = Joi.object({
+  trialId: Joi.string()
+    .pattern(/^[A-z]{3,3}\d{7,7}$/)
+    .required(),
+});
+
 /**
  * 결과값을 logging
  */
@@ -295,7 +305,14 @@ const taskManager = () => {
 };
 
 const getList = async (pageNum: number) => {
+  await schemaGetList.validateAsync({ pageNum });
   const result = await crisInfoDao.getListDao(pageNum);
+  return result;
+};
+
+const getListView = async (trialId: string) => {
+  await schemaGetListView.validateAsync({ trialId });
+  const result = await crisInfoDao.getListViewDao(trialId);
   return result;
 };
 
@@ -313,4 +330,5 @@ export default {
   loggingTask,
   difference,
   getList,
+  getListView,
 };
