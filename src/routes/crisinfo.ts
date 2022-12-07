@@ -17,4 +17,6 @@ router.get(
   errorHandlerAsync(crisinfoController.getListViewControll)
 );
 
+router.get("/detail", errorHandlerAsync(crisinfoController.getDetailControll));
+
 export default router;

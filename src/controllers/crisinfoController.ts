@@ -23,8 +23,14 @@ const getListViewControll = async (req: Request, res: Response) => {
   res.status(200).json(result);
 };
 
+const getDetailControll = async (req: Request, res: Response) => {
+  const { trial_id } = req.query;
+  const result = await crisInfoService.getDetail(String(trial_id));
+  res.status(200).json(result);
+};
 export default {
   crisInfoInputControll,
   getListControll,
   getListViewControll,
+  getDetailControll,
 };

@@ -108,6 +108,20 @@ const checkTotalCountOfCris = async () => {
 };
 
 /**
+ * TODO: open api 임상DB 에서 상세 읽기
+ */
+
+const getCrisDetailFromOpenAPI = async (trialId: string) => {
+  const serviceKey = process.env.SERVICE_KEY;
+  const rawData = await axios({
+    method: "get",
+    url: `http://apis.data.go.kr/1352159/crisinfodataview/detail?serviceKey=${serviceKey}&resultType=JSON&crisNumber=${trialId}`,
+  });
+  console.log(rawData.data);
+  return rawData.data;
+};
+
+/**
  * 실행이 완료되면 추가된 건 수, 업데이트 된 건 수를 출력하거나 따로 로깅해줘야함
  * #########      TODO      ############
  * 1.실행함수에서 값을 집계한다. 집계가 끝나면
@@ -316,6 +330,12 @@ const getListView = async (trialId: string) => {
   return result;
 };
 
+const getDetail = async (trialId: string) => {
+  await schemaGetListView.validateAsync({ trialId });
+  const result = await getCrisDetailFromOpenAPI(trialId);
+  return result;
+};
+
 export default {
   crisInfoInputService,
   getCrisInfoFromOpenAPI,
@@ -331,4 +351,5 @@ export default {
   difference,
   getList,
   getListView,
+  getDetail,
 };
