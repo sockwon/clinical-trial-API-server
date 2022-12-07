@@ -55,7 +55,7 @@ class CrisInfo {
   @Column({ type: "varchar", nullable: true, length: 4000 })
   primary_outcome_1_kr!: string;
 
-  @Column({ type: "boolean", nullable: false, default: false })
+  @Column({ type: "boolean", nullable: false, default: true })
   isNew!: boolean;
 
   @Column({ type: "boolean", nullable: false, default: false })

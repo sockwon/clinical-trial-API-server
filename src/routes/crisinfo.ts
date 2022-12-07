@@ -10,4 +10,11 @@ router.post(
   errorHandlerAsync(crisinfoController.crisInfoInputControll)
 );
 
+router.get("/list", errorHandlerAsync(crisinfoController.getListControll));
+
+router.get(
+  "/list/view",
+  errorHandlerAsync(crisinfoController.getListViewControll)
+);
+
 export default router;

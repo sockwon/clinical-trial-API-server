@@ -73,7 +73,6 @@ const isUpdateDao = async () => {
   const temp = date.getTime() - thirtyDays;
   const a = new Date(temp);
   const b = `${a.getFullYear()}-${a.getMonth() + 1}-${a.getDate()}`;
-  console.log(a);
   await database.query(
     `
     UPDATE cris_info SET isUpdate=false
@@ -86,6 +85,62 @@ const isUpdateDao = async () => {
   );
 };
 
+//TODO: isNew 를  true 또는 false 로 표시한다. 한달 이내 등재됐다면 true, 아니라면 false.
+const isNewDao = async () => {
+  const thirtyDays = 1000 * 60 * 60 * 24 * 30;
+  const date: Date = new Date();
+  const temp = date.getTime() - thirtyDays;
+  const a = new Date(temp);
+  const b = `${a.getFullYear()}-${a.getMonth() + 1}-${a.getDate()}`;
+  await database.query(
+    `
+  UPDATE cris_info SET isNew=false
+  `
+  );
+
+  await database.query(
+    `
+    UPDATE cris_info SET isNew=true WHERE date_registration>'${b}'
+    `
+  );
+};
+
+/**
+ * list get
+ * 1.isNew, isUpdate 를 가장 먼저 보여준다.
+ * 2.페이지 네이션 구현(offset, limit)
+ * 3.
+ */
+const getListDao = async (pageNum: number) => {
+  const howManySkip = pageNum * 10;
+  return await database
+    .getRepository(CrisInfo)
+    .createQueryBuilder("crisInfo")
+    .select("crisInfo.date_registration")
+    .addSelect("crisInfo.date_updated")
+    .addSelect("crisInfo.isNew")
+    .addSelect("crisInfo.isUpdate")
+    .addSelect("crisInfo.scientific_title_kr")
+    .addSelect("crisInfo.trial_id")
+    .skip(howManySkip)
+    .take(10)
+    .orderBy("crisInfo.isUpdate", "DESC")
+    .getMany();
+};
+
+/**
+ * list 정보를 자세히 보여준다
+ * 1.trial_id 로 검색한다.
+ */
+
+const getListViewDao = async (trialId: string) => {
+  return await database
+    .getRepository(CrisInfo)
+    .createQueryBuilder("crisInfo")
+    .where("trial_id =:trial_id", { trial_id: trialId })
+    .getOne();
+};
+
 export default {
   crisInfoInputDao,
   isEmptyDao,
@@ -93,4 +148,7 @@ export default {
   mataDataDao,
   getMetaData,
   isUpdateDao,
+  isNewDao,
+  getListDao,
+  getListViewDao,
 };
