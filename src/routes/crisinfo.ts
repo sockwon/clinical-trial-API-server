@@ -19,4 +19,9 @@ router.get(
 
 router.get("/detail", errorHandlerAsync(crisinfoController.getDetailControll));
 
+router.get(
+  "/list/search",
+  errorHandlerAsync(crisinfoController.getListBySearchControll)
+);
+
 export default router;
