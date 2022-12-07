@@ -17,7 +17,7 @@ const database = new DataSource({
   username: process.env.TYPEORM_USERNAME,
   password: process.env.TYPEORM_PASSWORD,
   database: process.env.TYPEORM_DATABASE,
-  logging: false,
+  logging: true,
   synchronize: true,
   entities: [CrisInfo, MetaData],
   charset: "utf8mb4",

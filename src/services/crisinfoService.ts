@@ -40,7 +40,7 @@ const schemaInputArray = Joi.array().items(schemaCrisInfoInputData);
 
 const schemaServiceKey = Joi.object({
   serviceKey: Joi.string().required(),
-  pageNum: Joi.number().required(),
+  pageNum: Joi.number().integer().positive().min(1).required(),
   numOfRows: Joi.number().required(),
 });
 
@@ -52,6 +52,11 @@ const schemaGetListView = Joi.object({
   trialId: Joi.string()
     .pattern(/^[A-z]{3,3}\d{7,7}$/)
     .required(),
+});
+
+const schemaGetListBySearch = Joi.object({
+  pageNum: Joi.number().integer().positive().min(1).required(),
+  searchText: Joi.string().allow(null, ""),
 });
 
 /**
@@ -336,6 +341,21 @@ const getDetail = async (trialId: string) => {
   return result;
 };
 
+const getListBySearch = async (pageNum: number, searchText: string) => {
+  await schemaGetListBySearch.validateAsync({ pageNum, searchText });
+  const value = searchText
+    .trim()
+    .split(" ")
+    .filter(Boolean)
+    .map((word) => word.trim())
+    .join("%");
+
+  const result = await crisInfoDao.getListBySerachDao(pageNum, value);
+  console.log("value:", value);
+  console.log("result:", result);
+  return result;
+};
+
 export default {
   crisInfoInputService,
   getCrisInfoFromOpenAPI,
@@ -352,4 +372,5 @@ export default {
   getList,
   getListView,
   getDetail,
+  getListBySearch,
 };

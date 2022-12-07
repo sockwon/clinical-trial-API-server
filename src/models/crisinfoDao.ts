@@ -14,17 +14,6 @@ const crisInfoInputDao = async (inputData: ICrisInputData[]) => {
     .updateEntity(false)
     .execute();
 };
-// const isEndDao = async () => {
-//   await database.query(
-//     `
-//     UPDATE cris_info
-//     SET cris_info.isEnd = true,
-//     cris_info.isUpdate = false
-//     WHERE cris_info.results_date_completed IS NOT NULL
-//     AND cris_info.results_date_completed <= DATE(CURRENT_TIMESTAMP)
-//     `
-//   );
-// };
 
 const isEmptyDao = async (table: string) => {
   return await database.query(
@@ -141,6 +130,49 @@ const getListViewDao = async (trialId: string) => {
     .getOne();
 };
 
+const getListBySerachDao = async (pageNum: number, searchText: string) => {
+  const queryForSearch = `%${searchText}%`;
+  const howManySkip = (pageNum - 1) * 10;
+  return await database
+    .getRepository(CrisInfo)
+    .createQueryBuilder("crisInfo")
+    .select("crisInfo.date_registration")
+    .addSelect("crisInfo.date_updated")
+    .addSelect("crisInfo.isNew")
+    .addSelect("crisInfo.isUpdate")
+    .addSelect("crisInfo.scientific_title_kr")
+    .addSelect("crisInfo.trial_id")
+    .where("trial_id like:trial_id", { trial_id: queryForSearch })
+    .orWhere("type_enrolment_kr like:type_enrolment_kr", {
+      type_enrolment_kr: queryForSearch,
+    })
+    .orWhere("i_freetext_kr like:i_freetext_kr", {
+      i_freetext_kr: queryForSearch,
+    })
+    .orWhere("source_name_kr like:source_name_kr", {
+      source_name_kr: queryForSearch,
+    })
+    .orWhere("primary_outcome_1_kr like:primary_outcome_1_kr", {
+      primary_outcome_1_kr: queryForSearch,
+    })
+    .orWhere("study_type_kr like:study_type_kr", {
+      study_type_kr: queryForSearch,
+    })
+    .orWhere("primary_sponsor_kr like:primary_sponsor_kr", {
+      primary_sponsor_kr: queryForSearch,
+    })
+    .orWhere("scientific_title_kr like:scientific_title_kr", {
+      scientific_title_kr: queryForSearch,
+    })
+    .orWhere("scientific_title_en like:scientific_title_en", {
+      scientific_title_en: queryForSearch,
+    })
+    .skip(howManySkip)
+    .take(10)
+    .orderBy("crisInfo.isUpdate", "DESC")
+    .getMany();
+};
+
 export default {
   crisInfoInputDao,
   isEmptyDao,
@@ -151,4 +183,5 @@ export default {
   isNewDao,
   getListDao,
   getListViewDao,
+  getListBySerachDao,
 };
