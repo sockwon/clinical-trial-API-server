@@ -199,7 +199,6 @@ const getData = async (page: number, rows: number) => {
 
 const bulkInsert = async (page: number, rows: number) => {
   console.log("page:", page);
-
   const data = await getData(page, rows);
   const result = await crisInfoInputService(data);
   const value: IMetaData = {
@@ -373,4 +372,5 @@ export default {
   getListView,
   getDetail,
   getListBySearch,
+  updateOneByOne,
 };
