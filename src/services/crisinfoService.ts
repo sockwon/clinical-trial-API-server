@@ -113,7 +113,7 @@ const checkTotalCountOfCris = async () => {
 };
 
 /**
- * TODO: open api 임상DB 에서 상세 읽기
+ * open api 임상DB 에서 상세 읽기
  */
 
 const getCrisDetailFromOpenAPI = async (trialId: string) => {

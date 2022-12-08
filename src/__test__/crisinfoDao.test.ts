@@ -81,6 +81,23 @@ describe("crisinfoDao test suite: 읽기", () => {
 
     expect(result).toBe("2");
   });
+
+  test("getListDao ", async () => {
+    const result = await crisinfoDao.getListDao(1);
+    expect(result.length).toBe(2);
+  });
+
+  test("getListViewDao", async () => {
+    const result: any = await crisinfoDao.getListViewDao("KCT0007932");
+    expect(result.scientific_title_kr).toBe(
+      "HX112의 여성 갱년기 증상 개선에 대한 유효성 및 안전성을 평가하기 위한 12주, 무작위배정, 이중눈가림, 위약 대조 인체적용시험"
+    );
+  });
+
+  test("getListBySerachDao", async () => {
+    const result: any = await crisinfoDao.getListBySerachDao(1, "헬릭스미스");
+    expect(result[0]["trial_id"]).toBe("KCT0007932");
+  });
 });
 
 describe("crisinfoDao test suite: 쓰기", () => {
@@ -294,5 +311,73 @@ describe("crisinfoDao test suite: 쓰기", () => {
     expect(result[0].meta_id).toBe("20221126");
     expect(result[0].affectedRowsInput).toBe(10);
     expect(result[0].affectedRowsUpdate).toBe(15);
+  });
+
+  test("isNewDao 한달이내에 추가된 임상 정보는 isNew 칼럼 값이 true 여야 한다", async () => {
+    const date: Date = new Date();
+    const b = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+    const example1 = [
+      {
+        primary_sponsor_kr: "전북대학교병원",
+        source_name_kr: "헬릭스미스",
+        phase_kr: "해당사항없음",
+        date_registration: new Date(b),
+        study_type_kr: "중재연구",
+        type_enrolment_kr: "실제등록",
+        results_type_date_completed_kr: "예정",
+        i_freetext_kr: "식이보충제",
+        results_date_completed: "2016-12-29",
+        trial_id: "KCT0008002",
+        scientific_title_kr:
+          "HX112의 여성 갱년기 증상 개선에 대한 유효성 및 안전성을 평가하기 위한 12주, 무작위배정, 이중눈가림, 위약 대조 인체적용시험",
+        primary_outcome_1_kr: "쿠퍼만 갱년기 지수",
+        date_updated: new Date("2022-11-09"),
+        date_enrolment: new Date("2022-04-27"),
+        scientific_title_en:
+          "A 12-week randomized, double-blind, placebo-controlled clinical trial to evaluate the efficacy and safety of HX112 on menopausal symptoms.",
+      },
+    ];
+    await crisinfoDao.crisInfoInputDao(example1);
+    await crisinfoDao.isNewDao();
+    const result = await database.query(
+      `
+      SELECT isNew FROM cris_info WHERE trial_id='KCT0008002'
+      `
+    );
+    expect(result[0]["isNew"]).toBe(1);
+  });
+
+  test("isUpdateDao 일주일 이내에 추가된 임상정보는 isUpdate 칼럼이 true 여야 한다.", async () => {
+    const date: Date = new Date();
+    const b = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+    const example1 = [
+      {
+        primary_sponsor_kr: "전북대학교병원",
+        source_name_kr: "헬릭스미스",
+        phase_kr: "해당사항없음",
+        date_registration: new Date("2016-12-29"),
+        study_type_kr: "중재연구",
+        type_enrolment_kr: "실제등록",
+        results_type_date_completed_kr: "예정",
+        i_freetext_kr: "식이보충제",
+        results_date_completed: "2016-12-29",
+        trial_id: "KCT0008003",
+        scientific_title_kr:
+          "HX112의 여성 갱년기 증상 개선에 대한 유효성 및 안전성을 평가하기 위한 12주, 무작위배정, 이중눈가림, 위약 대조 인체적용시험",
+        primary_outcome_1_kr: "쿠퍼만 갱년기 지수",
+        date_updated: new Date(b),
+        date_enrolment: new Date("2022-04-27"),
+        scientific_title_en:
+          "A 12-week randomized, double-blind, placebo-controlled clinical trial to evaluate the efficacy and safety of HX112 on menopausal symptoms.",
+      },
+    ];
+    await crisinfoDao.crisInfoInputDao(example1);
+    await crisinfoDao.isUpdateDao();
+    const result = await database.query(
+      `
+      SELECT isUpdate FROM cris_info WHERE trial_id='KCT0008003'
+      `
+    );
+    expect(result[0]["isUpdate"]).toBe(1);
   });
 });

@@ -86,7 +86,7 @@ describe("비즈니스 로직 테스트", () => {
 
   // test("bulkinsert: 3개를 입력", async () => {
   //   await crisInfoService.bulkInsert(1, 3);
-  //   const result = database.query(
+  //   const result = await database.query(
   //     `
   //     SELECT COUNT(*) FROM cris_info
   //     `
