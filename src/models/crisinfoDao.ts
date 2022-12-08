@@ -2,7 +2,6 @@ import database from "./database";
 import CrisInfo from "../entity/Crisinfo";
 import ICrisInputData from "../interfaces/Icrisinfo";
 import IMetaData from "../interfaces/IMetaData";
-import MetaData from "../entity/MetaData";
 
 const crisInfoInputDao = async (inputData: ICrisInputData[]) => {
   return await database
@@ -57,9 +56,9 @@ const getMetaData = async () => {
 };
 
 const isUpdateDao = async () => {
-  const thirtyDays = 1000 * 60 * 60 * 24 * 7;
+  const sevenDays = 1000 * 60 * 60 * 24 * 7;
   const date: Date = new Date();
-  const temp = date.getTime() - thirtyDays;
+  const temp = date.getTime() - sevenDays;
   const a = new Date(temp);
   const b = `${a.getFullYear()}-${a.getMonth() + 1}-${a.getDate()}`;
   await database.query(
@@ -67,14 +66,14 @@ const isUpdateDao = async () => {
     UPDATE cris_info SET isUpdate=false
     `
   );
-  return await database.query(
+  await database.query(
     `
     UPDATE cris_info SET isUpdate=true WHERE date_updated>'${b}'
     `
   );
 };
 
-//TODO: isNew 를  true 또는 false 로 표시한다. 한달 이내 등재됐다면 true, 아니라면 false.
+//isNew 를  true 또는 false 로 표시한다. 한달 이내 등재됐다면 true, 아니라면 false.
 const isNewDao = async () => {
   const thirtyDays = 1000 * 60 * 60 * 24 * 30;
   const date: Date = new Date();
@@ -129,6 +128,13 @@ const getListViewDao = async (trialId: string) => {
     .where("trial_id =:trial_id", { trial_id: trialId })
     .getOne();
 };
+
+/**
+ *
+ * @param pageNum
+ * @param searchText
+ * @returns
+ */
 
 const getListBySerachDao = async (pageNum: number, searchText: string) => {
   const queryForSearch = `%${searchText}%`;
