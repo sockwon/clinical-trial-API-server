@@ -308,7 +308,7 @@ const selectorOfInputOrUpdate = async () => {
 
 const taskManager = () => {
   logger.info("taskManager activated");
-  cron.schedule("33 13 * * *", async () => {
+  cron.schedule("20 12 * * *", async () => {
     await selectorOfInputOrUpdate();
     const result = await crisInfoDao.getMetaData();
     logger.info(
