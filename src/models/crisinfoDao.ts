@@ -100,7 +100,7 @@ const isNewDao = async () => {
  * 3.
  */
 const getListDao = async (pageNum: number) => {
-  const howManySkip = pageNum * 10;
+  const howManySkip = (pageNum - 1) * 10;
   return await database
     .getRepository(CrisInfo)
     .createQueryBuilder("crisInfo")
