@@ -1,0 +1,53 @@
+openapi: 3.0.0
+info:
+  title: crisInfo-api-server
+  description: 질병관리청 임상 DB의 open api 를 활용한 api server
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000/api/v1/
+    description: v1 의 서버. post 는 오직 관리자만 사용 가능하다. get 은 일반 사용자가 사용함.
+
+paths:
+  /crisinfo/list:
+    get:
+      summary: 임상 데이터를 리스트로 제공한다.
+      description: 일부 정보만 제공 되며 자세히 보려면 list/view 를 이용한다.
+      parameters:
+        - name: pageNum
+          in: query
+          required: true
+          description: 페이지네이션을 위한 페이지 값으로 1부터 시작한다.
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        "200":
+          description: json 형식으로 제공되는 임상 DB 리스트
+          content:
+            application/json:
+              schema:
+                type: array
+                  items: 
+                    type: object
+                    properties:
+                      trial_id:
+                        type: string
+                        example: KCT0007799
+                      scientific_title_kr:
+                        type: string
+                        example: 성문상 기도 유지기를 사용한 폐포 모집술의 효과 연구
+                      date_registration:
+                        type: string
+                        example: 2022-10-12
+                      date_updated:
+                        type: string
+                        example: 2022-12-07
+                      isNew:
+                        type: boolean
+                        example: false
+                      isUpdate:
+                        type: boolean
+                        example: true
+                    
