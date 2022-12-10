@@ -29,25 +29,350 @@ paths:
             application/json:
               schema:
                 type: array
-                  items: 
-                    type: object
-                    properties:
-                      trial_id:
-                        type: string
-                        example: KCT0007799
-                      scientific_title_kr:
-                        type: string
-                        example: 성문상 기도 유지기를 사용한 폐포 모집술의 효과 연구
-                      date_registration:
-                        type: string
-                        example: 2022-10-12
-                      date_updated:
-                        type: string
-                        example: 2022-12-07
-                      isNew:
-                        type: boolean
-                        example: false
-                      isUpdate:
-                        type: boolean
-                        example: true
-                    
+                items: 
+                  $ref: '#/components/schemas/List'
+                  example:
+                    - $ref: '#/components/examples/List'
+  /crisinfo/list/view:
+    get:
+      parameters:
+        - name: trial_id
+          in: query
+          required: true
+          description: 자세히 읽을 리스트의 trial_id 로써 고유값이다.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: json 형식으로 제공되는 임상 DB 리스트 중 하나를 골라 자세히 읽기
+          content:
+            application/json:
+              schema:                
+                $ref: '#/components/schemas/View'
+                example:
+                  $ref: '#/components/examples/View'
+  /crisinfo/detail:
+    get:
+      parameters:
+        - name: trial_id
+          in: query
+          required: true
+          description: 임상 DB 의 자세한 값을 읽을 수 있는 고유값.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: :ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+                # example:
+                #   $ref: '#/components/examples/Detail'
+
+
+
+
+components:
+  schemas:
+    List:
+      type: object
+      properties:
+          trial_id:
+            type: string
+          scientific_title_kr:
+            type: string
+          date_registration:
+            type: string
+          date_updated:
+            type: string
+          isNew:
+            type: boolean
+          isUpdate:
+            type: boolean
+      example:
+        trial_id: KCT0007799
+        scientific_title_kr: 성문상 기도 유지기를 사용한 폐포 모집술의 효과 연구
+        date_registration: 2022-10-12
+        date_updated: 2022-12-07
+        isNew: false
+        isUpdate: true
+
+    View:
+      type: object
+      properties:
+          id:
+            type: integer
+          trial_id:
+            type: string
+          scientific_title_kr:
+            type: string
+          scientific_title_en:
+            type: string                  
+          date_registration:
+            type: string
+          date_updated:
+            type: string
+          type_enrolment_kr:
+            type: string
+          date_enrolment:
+            type: string
+          results_date_completed:
+            type: string
+          results_type_date_completed_kr:
+            type: string
+          study_type_kr:
+            type: string
+          i_freetext_kr:
+            type: string
+          phase_kr:
+            type: string
+          source_name_kr:
+            type: string
+          primary_sponsor_kr:
+            type: string
+          primary_outcome_1_kr:
+            type: string                    
+          isNew:
+            type: boolean
+          isUpdate:
+            type: boolean
+          created_at:
+            type: string
+          updated_at:
+            type: string
+      example:
+        id: 84
+        trial_id: 'KCT0007887'
+        scientific_title_kr: '치주질환의 심도가 융모양막염 발생 및 신생아 예후에 미치는 영향'
+        scientific_title_en: Effects of maternal periodontitis on the occurrence of chorioamnionitis and the subsequent newborn morbidity
+        date_registration: 2022-11-11
+        date_updated: 2022-10-31
+        type_enrolment_kr: 실제등록
+        date_enrolment: 2020-08-14
+        results_date_completed: 2024-10-31
+        results_type_date_completed_kr": "예정"
+        study_type_kr": 관찰연구
+        i_freetext_kr": null
+        phase_kr": null
+        source_name_kr": 한국연구재단
+        primary_sponsor_kr": 고려대학교 안암병원
+        primary_outcome_1_kr": 태반 감염 및 염증의 증거, 그와 연관된 마이크로바이옴 및 사이토카인
+        isNew: true
+        isUpdate: false
+        created_at: 2022-12-06T09:46:30.733Z
+        updated_at: 2022-12-08T03:48:57.000Z 
+   
+    Detail:
+      type: object
+      properties:
+        outcome_items: 
+          type: array
+        biospecimen_retention_en: 
+          type: string
+        scientific_name_kr: 
+          type: string
+        public_title_en: 
+          type: string
+        public_name_en: 
+          type: string
+        results_type_date_completed_kr: 
+          type: string
+        resultMsg: 
+          type: string
+        results_date_completed: 
+          type: string
+        arm_items: 
+          type: array
+        phase_en: 
+          type: string
+        recruitment_status_kr: 
+          type: string
+        allocation_kr: 
+          type: string
+        target_size: 
+          type: integer
+        blinding_masking_en: 
+          type: string
+        affiliation_en: 
+          type: string
+        target_age_range_en: 
+          type: string
+        primary_purpose_kr:
+          type: string
+        intervention_model_kr:
+          type: string
+        target_gender_kr: 
+          type: string
+        study_summary_en: 
+          type: string
+        sponsor_items:
+          type: array
+        date_registration: 
+          type: string
+        blinding_masking_target_kr: 
+          type: string
+        public_affiliation_kr: 
+          type: string
+        i_freetext_type_en: 
+          type: string
+        trial_id: 
+          type: string
+        time_perspective_kr: 
+          type: string
+        type_enrolment_en: 
+          type: string
+        hc_code_kr: 
+          type: string
+        affiliation_kr:
+          type: string
+        public_name_kr: 
+          type: string
+        public_title_kr: 
+          type: string
+        primary_outcome_type_kr: 
+          type: string
+        study_type_kr: 
+          type: string
+        biospecimen_retention_kr: 
+          type: string
+        allocation_en: 
+          type: string
+        results_type_date_completed_en: 
+          type: string
+        group_number: 
+          type: string
+        target_gender_en: 
+          type: string
+        resultCode: 
+          type: string
+        date_enrolment:
+          type: string
+        target_age_range_kr: 
+          type: string
+        recruitment_status_en:
+          type: string
+        scientific_title_en: 
+          type: string
+        scientific_name_en: 
+          type: string 
+        blinding_masking_kr: 
+          type: string
+        funding_items":
+          type: array
+        study_summary_kr: 
+          type: string
+        public_affiliation_en: 
+          type: string
+        blinding_masking_target_en: 
+          type: string
+        phase_kr: 
+          type: string
+        hc_code_en: 
+          type: string
+        primary_purpose_en: 
+          type: string
+        research_items": 
+          type: array
+        type_enrolment_kr: 
+          type: string
+        intervention_model_en: 
+          type: string
+        primary_outcome_type_en: 
+          type: string
+        scientific_title_kr: 
+          type: string
+        date_updated: 
+          type : string
+        time_perspective_en: 
+          type: string
+        study_type_en:
+          type: string
+        telephone: 
+          type: string
+        i_freetext_type_kr: 
+          type: string
+      # example:
+      #   outcome_items: [{
+      #       primary_outcome_en: "After analyzing the α-diversity of microorganisms in the oral rinse and gingival crevicular fluid samples by 16s rRNA sequencing, the differences between the test group and the control group, and in the test group, were measured before periodontal treatment, 1 month after treatment, and 3 months after treatment. Compare and evaluate the difference.",
+      #       primary_outcome_time_en: 'In the test group, the differences between before periodontal treatment, 1 month after treatment, and 3 months after treatment were compared and evaluated',
+      #       primary_outcome_time_kr: "시험군에서는 치주치료 전, 치료 후 1개월, 치료 후 3개월의 차이를 비교 평가함.",
+      #       primary_outcome_kr: 'Oral rinse와 gingival crevicular fluid 표본 내 미생물의 α-diversity를 16s rRNA 염기서열분석으로 분석한 후, 시험군과 대조군의 차이, 그리고 시험군에서는 치주치료 전, 치료 후 1개월, 치료 후 3개월의 차이를 비교 평가함'
+      #    }]
+      #   biospecimen_retention_en: "Collect & Archive: Sample with DNA"
+      #   scientific_name_kr: "이중석"
+      #   public_title_en: "A prospective cohort study on association between periodontal diseases and cardiovascular diseases"
+      #   public_name_en: "Jung Seok Lee"
+      #   results_type_date_completed_kr: ""
+      #   resultMsg: "NORMAL_SERVICE"
+      #   results_date_completed: ""
+      #   arm_items: []
+      #   phase_en: ""
+      #   recruitment_status_kr: "대상자 모집 전"
+      #   allocation_kr: ""
+      #   target_size: 80
+      #   blinding_masking_en: ""
+      #   affiliation_en: "Yonsei University"
+      #   target_age_range_en: "20 Year ~ 75 Year"
+      #   primary_purpose_kr: ""
+      #   intervention_model_kr: ""
+      #   target_gender_kr: "둘다"
+      #   study_summary_en: "The hypothesis of periodontitis, which has become the trend in periodontology in recent years, is that the host's immune response due to dysbiosis of the oral microbiota causes sustained low-grade inflammation of the periodontal tissue. Therefore, we construct a microbiome database in periodontal disease and healthy patients through human material analysis, and comprehensively examine antigens including lipopolysaccharide (LPS) expressed in gram-negative bacteria related to periodontal disease, inflammatory cytokines and antibodies expressed in the host's immune system. Therefore, research is needed to identify risk factors that cause atherosclerotic vascular disease.\r\nIn this study, in order to reveal the relationship between periodontal disease and cardiovascular disease, a clinical-genomic information database of the periodontal/cardiovascular disease cohort was established to secure oral risk factors for cardiovascular disease and to analyze the risk level according to the causative strain. Based on the results of this study, clinical research on therapeutics and vaccines for periodontal-cardiovascular disease is possible in the future, so it is considered a field with high development potential."
+      #   sponsor_items: [
+      #       {
+      #           "primary_sponsor_kr": "학교법인연세대학교치과대학치과병원",
+      #           "primary_sponsor_en": "Yonsei University Health System, Dental Hospital"
+      #       }
+      #   ]
+      #   date_registration: "2022/11/11"
+      #   blinding_masking_target_kr: ""
+      #   public_affiliation_kr: "연세대학교"
+      #   i_freetext_type_en: ""
+      #   trial_id: "KCT0007888"
+      #   time_perspective_kr: "전향적"
+      #   type_enrolment_en: "Anticipated"
+      #   hc_code_kr: ""
+      #   affiliation_kr: "연세대학교"
+      #   public_name_kr: "이중석"
+      #   public_title_kr: "잇몸질환과 심장질환 발생에 대한 연관성 연구"
+      #   primary_outcome_type_kr: "해당사항 없음"
+      #   study_type_kr: "관찰연구"
+      #   biospecimen_retention_kr: "저장: DNA 포함"
+      #   allocation_en: ""
+      #   results_type_date_completed_en: ""
+      #   group_number: "0"
+      #   target_gender_en: "Both"
+      #   resultCode: "00"
+      #   date_enrolment: "2022-11-07"
+      #   target_age_range_kr: "20 세 ~ 75 세"
+      #   recruitment_status_en: "Not yet recruiting"
+      #   scientific_title_en: "A prospective cohort study on association between periodontal diseases and cardiovascular diseases"
+      #   scientific_name_en: "Jung Seok Lee"
+      #   blinding_masking_kr: ""
+      #   funding_items: [
+      #       {
+      #           "source_name_kr": "산업통상자원부",
+      #           "source_name_en": "Ministry of Trade, Industry & Energy"
+      #       }
+      #   ]
+      #   study_summary_kr: "근래에 치주학계의 대세를 이루는 치주염에 대한 가설은 구강 microbiota의 불균형(dysbiosis)으로 인한 숙주의 면역반응이 치주조직의 지속적인 저등급 염증(sustained low-grade inflammation)을 유발한다는 것이다. 따라서 인체유래물 분석을 통해 치주질환과 건강한 환자에서 microbiome database 구축하고, 치주질환 관련 그램 음성 세균에서 발현되는 lipopolysaccharide (LPS)를 포함한 항원, 숙주의 면역체계에서 발현되는 염증성 cytokine과 항체들을 포괄적으로 검사하여 동맥경화성 혈관질환을 유발하는 위험인자를 규명하는 연구가 필요하다.\r\n본 연구에서는 치주질환-심혈관질환의 연관성을 밝히고자, 치주/심혈관 질환 코호트의 임상-유전체 정보 데이터베이스를 구축하여 심혈관질환에 대한 구강 위험인자를 확보하고 원인 균주에 따른 위험 수준을 분석하고자 한다. 본 연구의 결과를 토대로 향후 치주-심혈관질환에 대한 치료제 및 백신에 대한 임상적 연구가 가능하므로 발전가능성이 높은 분야로 여겨진다.\r\n"
+      #   public_affiliation_en: "Yonsei University"
+      #   blinding_masking_target_en: ""
+      #   phase_kr: 
+      #   hc_code_en: 
+      #   primary_purpose_en: ""
+      #   research_items: [
+      #       {
+      #           "site_name_en": "Yonsei University Health System, Dental Hospital",
+      #           "site_name_kr": "학교법인연세대학교치과대학치과병원"
+      #       }
+      #   ]
+      #   type_enrolment_kr: "예정"
+      #   intervention_model_en: ""
+      #   primary_outcome_type_en: "Not applicable"
+      #   scientific_title_kr: "치주질환과 관상동맥 질환 발생 연관성 연구: 전향적 코호트 연구"
+      #   date_updated: "2022/10/31"
+      #   time_perspective_en: "Prospective"
+      #   study_type_en: "Observational Study"
+      #   telephone: "02-2228-3187"
+      #   i_freetext_type_kr: ""
