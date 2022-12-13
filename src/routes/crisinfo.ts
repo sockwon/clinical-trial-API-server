@@ -14,14 +14,14 @@ router.get("/list", errorHandlerAsync(crisinfoController.getListControll));
 
 router.get(
   "/list/view",
-  errorHandlerAsync(crisinfoController.getListViewControll)
+  errorHandlerAsync(crisinfoController.getListDetailControll)
 );
 
 router.get("/detail", errorHandlerAsync(crisinfoController.getDetailControll));
 
 router.get(
   "/list/search",
-  errorHandlerAsync(crisinfoController.getListBySearchControll)
+  errorHandlerAsync(crisinfoController.getSearchControll)
 );
 
 export default router;

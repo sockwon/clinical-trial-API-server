@@ -28,7 +28,7 @@ const startServer = async () => {
     logger.info(`Listening on Port ${PORT}`);
   });
 
-  crisInfoServeice.taskManager();
+  crisInfoServeice.taskScheduler();
 };
 
 startServer();

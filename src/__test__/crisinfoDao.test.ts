@@ -87,15 +87,15 @@ describe("crisinfoDao test suite: 읽기", () => {
     expect(result.length).toBe(2);
   });
 
-  test("getListViewDao", async () => {
-    const result: any = await crisinfoDao.getListViewDao("KCT0007932");
+  test("getListDetailDao", async () => {
+    const result: any = await crisinfoDao.getListDetailDao("KCT0007932");
     expect(result.scientific_title_kr).toBe(
       "HX112의 여성 갱년기 증상 개선에 대한 유효성 및 안전성을 평가하기 위한 12주, 무작위배정, 이중눈가림, 위약 대조 인체적용시험"
     );
   });
 
-  test("getListBySerachDao", async () => {
-    const result: any = await crisinfoDao.getListBySerachDao(1, "헬릭스미스");
+  test("getSerachDao", async () => {
+    const result: any = await crisinfoDao.getSerachDao(1, "헬릭스미스");
     expect(result[0]["trial_id"]).toBe("KCT0007932");
   });
 });

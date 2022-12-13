@@ -16,9 +16,9 @@ const getListControll = async (req: Request, res: Response) => {
   res.status(200).json(result);
 };
 
-const getListViewControll = async (req: Request, res: Response) => {
+const getListDetailControll = async (req: Request, res: Response) => {
   const { trial_id } = req.query;
-  const result = await crisInfoService.getListView(String(trial_id));
+  const result = await crisInfoService.getListDetail(String(trial_id));
   res.status(200).json(result);
 };
 
@@ -28,9 +28,9 @@ const getDetailControll = async (req: Request, res: Response) => {
   res.status(200).json(result);
 };
 
-const getListBySearchControll = async (req: Request, res: Response) => {
+const getSearchControll = async (req: Request, res: Response) => {
   const { searchText, pageNum } = req.query;
-  const result = await crisInfoService.getListBySearch(
+  const result = await crisInfoService.getSearch(
     Number(pageNum),
     String(searchText)
   );
@@ -39,7 +39,7 @@ const getListBySearchControll = async (req: Request, res: Response) => {
 export default {
   crisInfoInputControll,
   getListControll,
-  getListViewControll,
+  getListDetailControll,
   getDetailControll,
-  getListBySearchControll,
+  getSearchControll,
 };
