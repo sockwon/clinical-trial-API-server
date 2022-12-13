@@ -121,7 +121,7 @@ const getListDao = async (pageNum: number) => {
  * 1.trial_id 로 검색한다.
  */
 
-const getListViewDao = async (trialId: string) => {
+const getListDetailDao = async (trialId: string) => {
   return await database
     .getRepository(CrisInfo)
     .createQueryBuilder("crisInfo")
@@ -136,7 +136,7 @@ const getListViewDao = async (trialId: string) => {
  * @returns
  */
 
-const getListBySerachDao = async (pageNum: number, searchText: string) => {
+const getSerachDao = async (pageNum: number, searchText: string) => {
   const queryForSearch = `%${searchText}%`;
   const howManySkip = (pageNum - 1) * 10;
   return await database
@@ -188,6 +188,6 @@ export default {
   isUpdateDao,
   isNewDao,
   getListDao,
-  getListViewDao,
-  getListBySerachDao,
+  getListDetailDao,
+  getSerachDao,
 };

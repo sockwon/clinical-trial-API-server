@@ -304,8 +304,8 @@ const selectorOfInputOrUpdate = async () => {
  * 목적: 스케쥴러로써 유휴시간대에 업데이트를 한다. 시간은 30분 정도 걸린다.
  */
 
-const taskManager = () => {
-  logger.info("taskManager activated");
+const taskScheduler = () => {
+  logger.info("taskScheduler activated");
   cron.schedule("20 12 * * *", async () => {
     await selectorOfInputOrUpdate();
     const result = await crisInfoDao.getMetaData();
@@ -327,9 +327,9 @@ const getList = async (pageNum: number) => {
   return result;
 };
 
-const getListView = async (trialId: string) => {
+const getListDetail = async (trialId: string) => {
   await schemaGetListView.validateAsync({ trialId });
-  const result = await crisInfoDao.getListViewDao(trialId);
+  const result = await crisInfoDao.getListDetailDao(trialId);
   return result;
 };
 
@@ -339,7 +339,7 @@ const getDetail = async (trialId: string) => {
   return result;
 };
 
-const getListBySearch = async (pageNum: number, searchText: string) => {
+const getSearch = async (pageNum: number, searchText: string) => {
   await schemaGetListBySearch.validateAsync({ pageNum, searchText });
   const value = searchText
     .trim()
@@ -348,26 +348,15 @@ const getListBySearch = async (pageNum: number, searchText: string) => {
     .map((word) => word.trim())
     .join("%");
 
-  const result = await crisInfoDao.getListBySerachDao(pageNum, value);
+  const result = await crisInfoDao.getSerachDao(pageNum, value);
   return result;
 };
 
 export default {
-  crisInfoInputService,
-  getCrisInfoFromOpenAPI,
-  selectInputOrUpdate,
-  checkTotalCountOfCris,
-  getData,
-  batchForInput,
-  bulkInsert,
   selectorOfInputOrUpdate,
-  bulkUpdate,
-  taskManager,
-  loggingTask,
-  difference,
+  taskScheduler,
   getList,
-  getListView,
+  getListDetail,
   getDetail,
-  getListBySearch,
-  updateOneByOne,
+  getSearch,
 };
