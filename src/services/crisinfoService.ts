@@ -122,7 +122,6 @@ const getCrisDetailFromOpenAPI = async (trialId: string) => {
     method: "get",
     url: `http://apis.data.go.kr/1352159/crisinfodataview/detail?serviceKey=${serviceKey}&resultType=JSON&crisNumber=${trialId}`,
   });
-  console.log(rawData.data);
   return rawData.data;
 };
 
@@ -350,8 +349,6 @@ const getListBySearch = async (pageNum: number, searchText: string) => {
     .join("%");
 
   const result = await crisInfoDao.getListBySerachDao(pageNum, value);
-  console.log("value:", value);
-  console.log("result:", result);
   return result;
 };
 

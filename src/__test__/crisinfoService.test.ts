@@ -10,13 +10,14 @@ import {
 } from "@jest/globals";
 
 import database from "../models/database";
-import CrisInfo from "../entity/Crisinfo";
 import crisinfoDao from "../models/crisinfoDao";
 import ICrisInputData from "../interfaces/Icrisinfo";
 import crisInfoService from "../services/crisinfoService";
 import { createApp } from "../../app";
 import IMetaData from "../interfaces/IMetaData";
 import axios from "axios";
+import request from "supertest";
+import CrisInfo from "../entity/Crisinfo";
 
 const example: ICrisInputData = {
   primary_sponsor_kr: "전북대학교병원",
@@ -40,99 +41,64 @@ const example: ICrisInputData = {
 };
 
 describe("비즈니스 로직 테스트", () => {
-  let app;
+  let app: any;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
+    app = createApp();
     await database.initialize();
-    jest.clearAllMocks();
+    await database
+      .createQueryBuilder()
+      .insert()
+      .into(CrisInfo)
+      .values([example])
+      .execute();
   });
 
-  afterEach(async () => {
+  afterAll(async () => {
     await database.query(`TRUNCATE cris_info`);
     await database.query(`TRUNCATE meta_data`);
     await database.destroy();
   });
 
-  test("selectInputOrUpdate: cris_info 테이블에 자료가 없으므로 결과값이 0이 나와야 한다.", async () => {
-    const result = await crisInfoService.selectInputOrUpdate();
-
-    expect(result).toBe(0);
+  test("get list 테스트 : 성공", async () => {
+    const res = await request(app)
+      .get("/api/v1/crisinfo/list")
+      .query({ pageNum: 1 });
+    expect(res.status).toBe(200);
+    expect(res.body[0]).toEqual({
+      date_registration: "2022-11-22",
+      date_updated: "2022-11-10",
+      isNew: true,
+      isUpdate: false,
+      scientific_title_kr:
+        "건강한 성인에서 경방소시호탕과 합성의약품 3 종 (Amoxicillin/Clavulanate, Clarithromycin, Loxoprofen)의 상호작용을 평가하기 위한 공개, 단회/반복투여, 단일 순서군, 3-치료군, 교차 임상시험 ",
+      trial_id: "KCT0007930",
+    });
   });
 
-  test("bulkinsert: 3개를 입력", async () => {
-    await crisInfoService.bulkInsert(1, 3);
-
-    const result = await database.query(
-      `
-      SELECT COUNT(*) FROM cris_info
-      `
-    );
-
-    expect(result[0]["COUNT(*)"]).toBe("3");
+  test("get list view 테스트 : 성공", async () => {
+    const res = await request(app)
+      .get("/api/v1/crisinfo/list/view")
+      .query({ trial_id: "KCT0007930" });
+    expect(res.status).toBe(200);
+    expect(res.body.trial_id).toBe("KCT0007930");
   });
 
-  test("bulkinsert: metaData 3개 추가", async () => {
-    await crisInfoService.bulkInsert(1, 3);
-    const result = await database.query(
-      `
-    SELECT affectedRowsInput FROM meta_data LIMIT 1
-    `
-    );
-
-    expect(result[0]["affectedRowsInput"]).toBe(3);
-  });
-});
-
-describe("mocking axios", () => {
-  beforeEach(async () => {
-    await database.initialize();
-    jest.clearAllMocks();
-    jest.resetAllMocks();
-    jest.clearAllTimers();
-  });
-
-  afterEach(async () => {
-    await database.query(`TRUNCATE cris_info`);
-    await database.query(`TRUNCATE meta_data`);
-    await database.destroy();
-  });
-
-  test("loggingTask: 함수 실행 결과 mataDataDao 를 호출한다", async () => {
-    const data: IMetaData = {
-      affectedRowsInput: 0,
-      affectedRowsUpdate: 0,
-      meta_id: "aaa",
-    };
-
-    crisinfoDao.mataDataDao = jest.fn<typeof crisinfoDao.mataDataDao>();
-
-    await crisInfoService.loggingTask(data);
-
-    expect(crisinfoDao.mataDataDao).toBeCalledTimes(1);
-  });
-
-  test("getCrisInfoFromOpenAPI: axios 외부 모듈 호출", async () => {
-    const spyGet = jest.spyOn(axios, "get");
-
-    await crisInfoService.getCrisInfoFromOpenAPI(1, 10);
-    expect(spyGet).toBeCalledTimes(1);
-  });
-
-  test("getCrisInfoFromOpenAPI: rawData.data.items 가 텅 비었다면 error를 던진다", async () => {
-    axios.get = jest.fn<any>().mockResolvedValue({ data: { items: [] } });
-    await expect(crisInfoService.getCrisInfoFromOpenAPI(1, 11)).rejects.toThrow(
-      "no contents"
+  test("get detail 테스트: 성공", async () => {
+    const res = await request(app)
+      .get("/api/v1/crisinfo/detail")
+      .query({ trial_id: "KCT0007930" });
+    expect(res.status).toBe(200);
+    expect(res.body.scientific_title_kr).toBe(
+      "건강한 성인에서 경방소시호탕과 합성의약품 3 종 (Amoxicillin/Clavulanate, Clarithromycin, Loxoprofen)의 상호작용을 평가하기 위한 공개, 단회/반복투여, 단일 순서군, 3-치료군, 교차 임상시험 "
     );
   });
 
-  test("crisInfoInputService: crisInfoInputDao 함수를 호출함", async () => {
-    const inputData = [example];
-
-    crisinfoDao.crisInfoInputDao =
-      jest.fn<typeof crisinfoDao.crisInfoInputDao>();
-
-    await crisInfoService.crisInfoInputService(inputData);
-
-    expect(crisinfoDao.crisInfoInputDao).toBeCalledTimes(1);
+  test("get list search 테스트 : 성공", async () => {
+    const res = await request(app)
+      .get("/api/v1/crisinfo/list/search")
+      .query({ searchText: "전북대학교병원", pageNum: 1 });
+    expect(res.status).toBe(200);
+    expect(res.body[0].trial_id).toBe("KCT0007930");
   });
 });
