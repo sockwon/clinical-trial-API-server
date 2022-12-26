@@ -4,7 +4,10 @@ import { logger } from "./config/winston";
 const dbStart = async () => {
   await database
     .initialize()
-    .then(() => {
+    .then(async () => {
+      // await database.query(
+      //   `CREATE database IF NOT EXISTS 'clinical_trial_test'`
+      // );
       logger.info("Data Source has been initialized!");
     })
     .catch((err: any) => {

@@ -1,0 +1,35 @@
+version: "3.8"
+services:
+  server:
+    depends_on: 
+      - mysqlDB
+    ports: 
+      - 8000:8000
+    build: ./
+    
+    command: ["./wait-for-it.sh", "mysql:3306"]
+    restart: unless-stopped
+    tty: true # 't'
+    networks:
+      - clinical_trial
+  
+  mysqlDB:
+    image: mysql:8
+    restart: unless-stopped
+    environment:
+      - MYSQL_DATABASE=clinical_trial
+      - MYSQL_CONTAINER_NAME=mysql_db
+      - MYSQL_ROOT_PASSWORD=password
+    container_name: mysqlDB
+    volumes:
+      - /var/lib/mysql
+    ports: 
+      - 3306:3306
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    networks:
+      - clinical_trial
+networks:
+  clinical_trial:
+

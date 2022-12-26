@@ -303,18 +303,20 @@ const selectorOfInputOrUpdate = async () => {
 /**
  * 목적: 스케쥴러로써 유휴시간대에 업데이트를 한다. 시간은 30분 정도 걸린다.
  */
-
+const update = async () => {
+  await selectorOfInputOrUpdate();
+  const result = await crisInfoDao.getMetaData();
+  logger.info(
+    `affectedRowsInput: ${result[0].affectedRowsInput}, affectedRowsUpdate: ${result[0].affectedRowsUpdate}`
+  );
+  await crisInfoDao.isUpdateDao();
+  await crisInfoDao.isNewDao();
+  logger.info("update or input done");
+};
 const taskScheduler = () => {
   logger.info("taskScheduler activated");
-  cron.schedule("20 12 * * *", async () => {
-    await selectorOfInputOrUpdate();
-    const result = await crisInfoDao.getMetaData();
-    logger.info(
-      `affectedRowsInput: ${result[0].affectedRowsInput}, affectedRowsUpdate: ${result[0].affectedRowsUpdate}`
-    );
-    await crisInfoDao.isUpdateDao();
-    await crisInfoDao.isNewDao();
-    logger.info("update or input done");
+  cron.schedule("20 3 * * *", async () => {
+    await update();
   });
 
   //isNew 는 임상 논문 등재일로부터 한달이내인 경우 true, 나머지 경우는 false 로 한다.
@@ -359,4 +361,5 @@ export default {
   getListDetail,
   getDetail,
   getSearch,
+  update,
 };
