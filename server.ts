@@ -28,6 +28,9 @@ const startServer = async () => {
     logger.info(`Listening on Port ${PORT}`);
   });
 
+  //서버를 최초로 작동하면 crisinfo 업데이트를 하게된다.
+  crisInfoServeice.update();
+  //매일 3시20분에 데이터베이스를 업데이터 한다.
   crisInfoServeice.taskScheduler();
 };
 
